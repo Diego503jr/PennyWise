@@ -1,0 +1,50 @@
+:root {
+  --navbar-bg: #455a64;
+  --navbar-text: #ffffff;
+  --btn-bg: #ddbf7c;
+  --btn-text: #2c2c2c;
+  --bg-primary: #f4f6f8;
+}
+
+/* RESETEO & FUENTE GLOBAL */
+body {
+  margin: 0;
+  font-family: "Open Sans", sans-serif;
+  background: var(--bg-primary);
+}
+
+/* NAVBAR */
+.custom-nav {
+  background-color: var(--navbar-bg);
+}
+
+/* FOOTER */
+.custom-footer {
+  background-color: var(--navbar-bg);
+}
+
+/* LINKS */
+.nav-link {
+  color: var(--navbar-text) !important;
+  font-weight: 500;
+  transition: 0.3s;
+}
+.nav-link:hover {
+  opacity: 0.8;
+}
+
+/* BOTÓN */
+.btn-login {
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  padding: 6px 18px;
+  border-radius: 6px;
+  border: none;
+  transition: 0.3s;
+}
+.btn-login:hover {
+  opacity: 0.85;
+  cursor: pointer;
+}
