@@ -1,0 +1,129 @@
+:root {
+    --navbar-bg: #455a64;
+    --btn-bg: #ddbf7c;
+    --btn-text: #2c2c2c;
+    --bg-primary: #f4f6f8;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  font-family: "Open Sans", sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Open Sans", sans-serif;
+  background: var(--bg-primary);
+}
+
+#periodoIngreso,
+#periodoGasto,
+#editarPeriodo {
+    display: none;
+}
+
+.forms-sections {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.mi-tarjeta {
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: none !important;
+    transition: 0.2s ease-in-out;
+}
+
+.mi-tarjeta:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.btn-login {
+    background-color: var(--btn-bg);
+    color: var(--btn-text);
+    font-weight: 600;
+    padding: 6px 18px;
+    border-radius: 6px;
+    border: none;
+    transition: 0.3s;
+}
+
+.btn-login:hover {
+    opacity: 0.85;
+    cursor: pointer;
+}
+
+main {
+    margin-bottom: 80px;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table {
+    min-width: 600px;
+}
+
+.table td,
+.table th {
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.table td:last-child {
+    text-align: center;
+}
+
+
+@media (max-width: 576px) {
+    .table td i {
+        font-size: 1rem;
+    }
+
+    .table td button {
+        padding: 4px 6px;
+    }
+
+    .forms-sections {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+}
+
+#filtroTipo,
+#filtroMes,
+#filtroCategoria {
+    margin-bottom: 0.75rem;
+}
+
+section.card.mi-tarjeta select,
+section.card.mi-tarjeta input[type="month"] {
+    margin-bottom: 0.75rem;
+}
+
+#filtroTipo,
+#filtroMes,
+#filtroCategoria {
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+}
+
+@media (min-width: 992px) {
+
+    #filtroTipo,
+    #filtroMes,
+    #filtroCategoria {
+        margin-bottom: 0.5rem;
+    }
+}
+
+input[type="month"] {
+    cursor: pointer;
+}
