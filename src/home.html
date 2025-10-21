@@ -6,38 +6,69 @@
     <title>Inicio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
     <!-- GOOGLE FONTS -->
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;500&display=swap"
       rel="stylesheet"
     />
-
     <!-- BOOTSTRAP -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-
-    <!-- TU CSS -->
+    <!-- Bootstrap Icons CDN -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <!-- CSS -->
     <link rel="stylesheet" href="./css/styles.css" />
   </head>
-
   <body>
     <!-- NAV -->
     <div id="navbar"></div>
 
     <!-- CONTENIDO -->
-    <main class="container py-5 text-center">
-      <h1>Contenido aquí</h1>
-      <p>Tu home comienza aquí facilmente.</p>
+    <main class="container text-center">
+      <!-- SALDO Y METAS -->
+      <section>
+        <div class="row justify-content-between">
+          <h5 class="my-3 text-start fw-bold">Resumen</h5>
+          <div class="col-sm-12 col-md-7 card border-0 shadow-sm">
+            <h5 class="my-3">Saldo Total Actual</h5>
+          </div>
+          <div class="col-sm-12 col-md-4 card border-0 shadow-sm">
+            <h5 class="my-3">Metas ahorro</h5>
+          </div>
+        </div>
+      </section>
+
+      <!-- ALERTAS DE PRESUPUESTO -->
+      <section class="my-5">
+        <h5 class="my-3 text-start fw-bold">Alertas Presupuesto</h5>
+        <div class="row justify-content-center">
+          <div class="col-sm-12 card border-0 shadow-sm">
+            <h5 class="my-3">Alertas Presupuesto</h5>
+          </div>
+        </div>
+      </section>
+
+      <!-- TRANSACCIONES -->
+      <section class="my-5">
+        <h5 class="my-3 text-start fw-bold">Transacciones</h5>
+        <div class="row justify-content-center">
+          <div class="col-sm-12 card border-0 shadow-sm">
+            <h5 class="my-3">Transacciones</h5>
+          </div>
+        </div>
+      </section>
     </main>
 
     <!-- FOOTER -->
     <div id="footer"></div>
 
-    <!-- JS BOOTSTRAP -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS + Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script src="./componentes/addFooterNav.js"></script>
   </body>

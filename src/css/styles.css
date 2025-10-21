@@ -7,10 +7,21 @@
 }
 
 /* RESETEO & FUENTE GLOBAL */
+* {
+  margin: 0;
+  padding: 0;
+  font-family: "Open Sans", sans-serif;
+}
 body {
   margin: 0;
+  padding: 0;
   font-family: "Open Sans", sans-serif;
   background: var(--bg-primary);
+}
+
+/* TOMAR ESTO PARA EL FIXED DEL NAV */
+main {
+  padding-top: 8em;
 }
 
 /* NAVBAR */
@@ -44,7 +55,13 @@ body {
   border: none;
   transition: 0.3s;
 }
+
 .btn-login:hover {
   opacity: 0.85;
   cursor: pointer;
+}
+
+/* Texto */
+.txt-yellow {
+  color: var(--btn-bg);
 }
