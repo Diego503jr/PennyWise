@@ -12,6 +12,7 @@
   padding: 0;
   font-family: "Open Sans", sans-serif;
 }
+
 body {
   margin: 0;
   padding: 0;
@@ -40,6 +41,7 @@ main {
   font-weight: 500;
   transition: 0.3s;
 }
+
 .nav-link:hover {
   opacity: 0.8;
 }
@@ -64,4 +66,24 @@ main {
 /* Texto */
 .txt-yellow {
   color: var(--btn-bg);
+}
+
+
+
+
+
+/* Presupuesto */
+.mi-tarjeta {
+  border-radius: 0.75rem ;
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) ;
+
+  transition: all 0.2s ease-in-out;
+
+  border: none !important;
+}
+
+.mi-tarjeta:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
 }
