@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const guardarLocal = () => localStorage.setItem("registros", JSON.stringify(registros));
 
     const calcularSaldo = () => {
-        const total = registros.reduce((acc, r) => r.tipo === "ingreso" ? acc + r.monto : acc - r.monto, 0);
+        const total = registros.reduce((acc, r) => r.tipo === "Ingreso" ? acc + r.monto : acc - r.monto, 0);
         saldoTotal.textContent = `$${total.toFixed(2)}`;
     };
 
@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
         filtrados.forEach((r, i) => {
             const fila = document.createElement("tr");
             fila.innerHTML = `
-        <td class="${r.tipo === "ingreso" ? "text-success fw-bold" : "text-danger fw-bold"}">${r.tipo}</td>
+        <td class="${r.tipo === "Ingreso" ? "text-success fw-bold" : "text-danger fw-bold"}">${r.tipo}</td>
         <td>$${r.monto}</td>
         <td>${r.categoria || r.descripcion}</td>
         <td>${r.fecha}</td>
@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
     formIngreso.addEventListener("submit", e => {
         e.preventDefault();
         const ingreso = {
-            tipo: "ingreso",
+            tipo: "Ingreso",
             monto: parseFloat(document.getElementById("montoIngreso").value),
             periodo: "Mensual",
             categoria: document.getElementById("categoriaIngreso").value,
