@@ -1,0 +1,234 @@
+:root {
+    --navbar-bg: #455a64;
+    --navbar-text: #ffffff;
+    --btn-bg: #2b7bd9;
+    /* primary blue */
+    --btn-text: #ffffff;
+    --bg-primary: #f4f6f8;
+}
+
+/* RESETEO & FUENTE GLOBAL */
+* {
+    margin: 0;
+    padding: 0;
+    font-family: "Open Sans", sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Open Sans", sans-serif;
+    background: var(--bg-primary);
+}
+
+.btn-gold {
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    border: none;
+}
+
+.btn-gold:hover {
+    filter: brightness(0.95);
+}
+
+.mi-tarjeta {
+    background: #fff;
+    border: none;
+    box-shadow: 0 6px 18px rgba(23, 34, 45, 0.05);
+    border-radius: 6px;
+}
+
+.mi-tarjeta .form-label {
+    color: #47555a;
+}
+
+.mi-tarjeta .form-control {
+    background: #f1f6f8;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.mi-tarjeta .form-select {
+    background: #fff;
+}
+
+.mi-tarjeta .btn-gold {
+    padding: 8px 18px;
+    border-radius: 6px;
+}
+
+#listaMetas .meta-card {
+    min-height: 220px;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform .12s ease, box-shadow .12s ease;
+}
+
+#listaMetas .meta-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(23, 34, 45, 0.06);
+}
+
+.meta-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.meta-title {
+    font-weight: 700;
+    color: #334450;
+    font-size: 1.03rem;
+}
+
+.meta-amount {
+    font-weight: 800;
+    color: #2b6b61;
+    font-size: 1.05rem;
+}
+
+.meta-progress {
+    height: 20px;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.meta-progress>.fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--btn-bg), #2b6b61);
+}
+
+.meta-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Calculadora */
+.btn-login2 {
+    background: transparent;
+    color: #21343a;
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    padding: 6px 18px;
+    border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.06);
+    transition: 0.15s ease;
+}
+.btn-login2:hover,
+.btn-login2:focus {
+    background: rgba(43,123,217,0.06);
+}
+.btn-login2.active {
+    background: var(--btn-bg) !important;
+    color: var(--btn-text) !important;
+    border-color: var(--btn-bg) !important;
+}
+
+/* smoother fade and subtle scale for active toggle */
+.btn-login2 {
+    transition: background 240ms ease, color 240ms ease, transform 180ms ease;
+}
+.btn-login2.active {
+    transform: translateY(-1px);
+}
+
+/* Advanced result highlight */
+#avResultado {
+    font-size: 1rem; /* baseline */
+    transition: transform 300ms ease, box-shadow 300ms ease, font-size 220ms ease;
+}
+#avResultado.highlight {
+    font-size: 1.18rem;
+    font-weight: 700;
+    color: var(--btn-bg);
+    box-shadow: 0 6px 20px rgba(17,163,200,0.18);
+    transform: translateY(-2px);
+}
+
+.calculadora-normal {
+    max-width: 360px;
+    margin: 0 auto;
+}
+
+.calc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.calc-btn,
+.calc-op {
+    width: 100%;
+    padding: 12px 8px;
+    height: 56px;
+    font-size: 1rem;
+    border-radius: 8px;
+}
+
+#calcEquals {
+    background: #11a3c8 !important;
+    /* cyan action color */
+    border-color: #0d8fa3 !important;
+    color: #fff !important;
+}
+
+.calc-op {
+    background: #e9f2fb;
+    border-color: rgba(0, 0, 0, 0.04);
+}
+
+.calc-btn {
+    background: #f8fbff;
+    border-color: rgba(0, 0, 0, 0.03);
+}
+
+.calc-btn:active,
+.calc-op:active {
+    transform: translateY(1px);
+}
+
+.calculadora-normal #calcPantalla {
+    text-align: right;
+    font-size: 1.1rem;
+    padding-right: 12px;
+}
+
+.btn-outline-secondary.active {
+    background: var(--btn-bg);
+    border-color: var(--btn-bg);
+    color: var(--btn-text);
+}
+
+/* Active style for the custom login-like buttons used as mode toggles */
+.btn-login.active,
+.btn-login.active:hover {
+    background: var(--btn-bg) !important;
+    border-color: var(--btn-bg) !important;
+    color: var(--btn-text) !important;
+}
+
+/* Ensure the '=' button stays green and visible despite .calc-btn defaults */
+#calcEquals {
+    background: #11a3c8 !important;
+    /* cyan action color */
+    border-color: #0d8fa3 !important;
+    color: #fff !important;
+}
+
+@media (min-width: 992px) {
+
+    /* Use two columns on large screens to make cards wider and reduce empty space */
+    #listaMetas .col-lg-4 {
+        display: flex;
+    }
+
+    #listaMetas .col-md-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
