@@ -1,0 +1,68 @@
+:root {
+  --navbar-bg: #455a64;
+  --navbar-text: #ffffff;
+  --btn-bg: #ddbf7c;
+  --btn-text: #2c2c2c;
+  --bg-primary: #f4f6f8;
+}
+
+body, html {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: "Open Sans", sans-serif;
+  background-color: var(--bg-primary);
+}
+
+.bg-left {
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.bg-right {
+  background-color: var(--navbar-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo {
+  max-width: 400px;
+}
+
+.system-name {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  color: var(--btn-bg);
+  margin-bottom: 0.5rem;
+}
+
+.form-input {
+  background-color: transparent;
+  color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.form-input:focus {
+  outline: none;
+  box-shadow: 0 0 5px var(--input-focus);
+  border-color: var(--input-focus);
+}
+
+.btn-login {
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  padding: 10px 0;
+  transition: 0.3s;
+}
+
+.btn-login:hover {
+  opacity: 0.85;
+}
