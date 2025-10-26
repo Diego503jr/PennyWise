@@ -58,11 +58,12 @@ body, html {
   color: var(--btn-text);
   font-weight: 600;
   border-radius: 6px;
-  border: none;
+  border: 1px solid #ddbf7c;
   padding: 10px 0;
   transition: 0.3s;
 }
 
 .btn-login:hover {
-  opacity: 0.85;
+  opacity: 0.95;
+  border: 1px solid #ddbf7c;
 }
