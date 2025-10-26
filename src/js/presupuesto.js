@@ -1,41 +1,41 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
 
- 
-    const ingresosFijos = [
-        { descripcion: "Salario Quincena 1", monto: 750, periodo: "Quincenal" },
-        { descripcion: "Salario Quincena 2", monto: 750, periodo: "Quincenal" }
+
+    const todosLosRegistros = JSON.parse(localStorage.getItem("registros")) || [];
+
+
+    const ingresosFijos = todosLosRegistros.filter(r => r.tipo === 'Ingreso');
+
+    const categoriasGastosFijos = ['Gastos Fijos', 'Deudas', 'Ahorro', 'Ahorros']; 
+    const gastosFijos = todosLosRegistros.filter(r =>
+        r.tipo === 'Gasto' && categoriasGastosFijos.includes(r.categoria)
+    );
+
+    const transaccionesReales = todosLosRegistros.filter(r =>
+        r.tipo === 'Gasto' && !categoriasGastosFijos.includes(r.categoria)
+    );
+
+    const VALORES_DEFECTO_LIMITES = [
+        { categoria: "Provisiones", limite: 400 },
+        { categoria: "Gastos Variables", limite: 230 } 
     ];
 
-    const gastosFijos = [
-      
-        { descripcion: "Renta / Hipoteca", monto: 500, categoria: "Gastos Fijos", periodo: "Mensual" },
-        { descripcion: "Pago Préstamo Auto", monto: 180, categoria: "Deudas", periodo: "Mensual" },
-        { descripcion: "Meta Ahorro Viaje", monto: 150, categoria: "Ahorros", periodo: "Mensual" }
-    ];
+    
+    let limitesPresupuesto = JSON.parse(localStorage.getItem("limitesDePresupuesto")) || VALORES_DEFECTO_LIMITES;
 
-    let limitesPresupuesto = [
-        { categoria: "Gastos Variables - Comida", limite: 400 },
-        { categoria: "Gastos Variables - Ocio", limite: 150 },
-        { categoria: "Gastos Variables - Transporte", limite: 80 }
-    ];
 
-    const transaccionesReales = [
-        { descripcion: "Supermercado", monto: 90, categoria: "Gastos Variables - Comida" },
-        { descripcion: "Cena con amigos", monto: 45, categoria: "Gastos Variables - Ocio" },
-        { descripcion: "Gasolina", monto: 40, categoria: "Gastos Variables - Transporte" },
-        { descripcion: "Restaurante", monto: 30, categoria: "Gastos Variables - Comida" },
-        { descripcion: "Cine", monto: 20, categoria: "Gastos Variables - Ocio" },
-        { descripcion: "Supermercado", monto: 120, categoria: "Gastos Variables - Comida" },
-        { descripcion: "Gasolina", monto: 45, categoria: "Gastos Variables - Transporte" } // ¡Se pasó!
-    ];
+
 
     const listaIngresosUI = document.getElementById('listaIngresosFijos');
-    const listaGastosFijosUI = document.getElementById('listaGastosFijos'); 
+    const listaGastosFijosUI = document.getElementById('listaGastosFijos');
     const listaMonitoreoUI = document.getElementById('listaMonitoreoPresupuestos');
     const balanceUI = document.getElementById('balanceTotal');
     const totalIngresosUI = document.getElementById('totalIngresos');
-    const totalGastosFijosUI = document.getElementById('totalGastosFijos'); 
+    const totalGastosFijosUI = document.getElementById('totalGastosFijos');
     const formLimites = document.getElementById('formEstablecerLimites');
+
+
+    const modalLimites = document.getElementById('modalEstablecerLimites');
 
     let chartBarra = null;
     let chartDona = null;
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return (monto ?? 0).toLocaleString('es-SV', { style: 'currency', currency: 'USD' });
     };
 
-
+   
     function actualizarDashboard() {
         const totalIngresos = ingresosFijos.reduce((sum, item) => sum + item.monto, 0);
         const totalGastosFijos = gastosFijos.reduce((sum, item) => sum + item.monto, 0);
@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderizarListasFijas(totalIngresos, totalGastosFijos);
 
         const gastosRealesPorCategoria = transaccionesReales.reduce((acc, trans) => {
+     
             if (!acc[trans.categoria]) {
                 acc[trans.categoria] = 0;
             }
@@ -70,14 +71,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderizarListasFijas(totalIngresos, totalGastosFijos) {
-        listaIngresosUI.innerHTML = ''; // Limpiar "Cargando..."
+        listaIngresosUI.innerHTML = '';
         ingresosFijos.forEach(ingreso => {
             const li = document.createElement('li');
             li.className = 'list-group-item d-flex justify-content-between align-items-center';
             li.innerHTML = `
                 <div>
                     <strong>${ingreso.descripcion}</strong>
-                    <small class="d-block text-muted">${ingreso.periodo}</small>
+                    <small class="d-block text-muted">${ingreso.periodo || 'N/A'}</small> 
                 </div>
                 <span class="badge bg-success-subtle text-success-emphasis rounded-pill fs-6">${formatCurrency(ingreso.monto)}</span>
             `;
@@ -85,14 +86,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         totalIngresosUI.textContent = formatCurrency(totalIngresos);
 
-        listaGastosFijosUI.innerHTML = ''; // Limpiar "Cargando..."
+        listaGastosFijosUI.innerHTML = '';
         gastosFijos.forEach(gasto => {
             const li = document.createElement('li');
             li.className = 'list-group-item d-flex justify-content-between align-items-center';
             li.innerHTML = `
                 <div>
                     <strong>${gasto.descripcion}</strong>
-                    <small class="d-block text-muted">${gasto.categoria} (${gasto.periodo})</small>
+                    <small class="d-block text-muted">${gasto.categoria} (${gasto.periodo || 'N/A'})</small>
                 </div>
                 <span class="badge bg-danger-subtle text-danger-emphasis rounded-pill fs-6">${formatCurrency(gasto.monto)}</span>
             `;
@@ -101,21 +102,21 @@ document.addEventListener('DOMContentLoaded', function() {
         totalGastosFijosUI.textContent = formatCurrency(totalGastosFijos);
     }
 
-    
+
     function renderizarMonitoreo(gastosRealesPorCategoria) {
-        listaMonitoreoUI.innerHTML = ''; // Limpiar el "Cargando..."
+        listaMonitoreoUI.innerHTML = '';
 
         limitesPresupuesto.forEach(presupuesto => {
             const categoria = presupuesto.categoria;
             const limite = presupuesto.limite;
-            const gastado = gastosRealesPorCategoria[categoria] || 0; // Si no hay gastos, es 0
+            const gastado = gastosRealesPorCategoria[categoria] || 0;
 
             const porcentaje = (gastado / limite) * 100;
-            let barraColor = 'bg-success'; 
+            let barraColor = 'bg-success';
             if (porcentaje > 100) {
-                barraColor = 'bg-danger'; // Rojo si se pasa
+                barraColor = 'bg-danger';
             } else if (porcentaje > 85) {
-                barraColor = 'bg-warning'; // Amarillo si está cerca
+                barraColor = 'bg-warning';
             }
 
             const div = document.createElement('div');
@@ -137,15 +138,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
- 
+
     function renderizarGraficos(totalIngresos, totalGastosFijos, gastosRealesPorCategoria) {
-        // Destruir gráficos anteriores si existen (importante para actualizar)
         if (chartBarra) chartBarra.destroy();
         if (chartDona) chartDona.destroy();
 
         const totalGastosVariablesReales = Object.values(gastosRealesPorCategoria).reduce((s, a) => s + a, 0);
 
-        // Gráfico 1: Ingresos vs. Gastos (Barra)
         const ctxBarra = document.getElementById('graficoIngresosVsGastos').getContext('2d');
         chartBarra = new Chart(ctxBarra, {
             type: 'bar',
@@ -155,22 +154,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     label: 'Monto',
                     data: [totalIngresos, totalGastosFijos, totalGastosVariablesReales],
                     backgroundColor: [
-                        'rgba(75, 192, 192, 0.6)', // Verde (Ingreso)
-                        'rgba(255, 159, 64, 0.6)', // Naranja (Fijos)
-                        'rgba(255, 99, 132, 0.6)'  // Rojo (Variables)
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(255, 159, 64, 0.6)',
+                        'rgba(255, 99, 132, 0.6)'
                     ]
                 }]
             },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false, 
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
                 scales: { y: { beginAtZero: true } },
                 plugins: { legend: { display: false } }
             }
         });
 
 
-        const desgloseTotal = { ...gastosRealesPorCategoria }; // Copia de gastos variables
+        const desgloseTotal = { ...gastosRealesPorCategoria };
         gastosFijos.forEach(gasto => {
             if (!desgloseTotal[gasto.categoria]) {
                 desgloseTotal[gasto.categoria] = 0;
@@ -186,12 +185,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     data: Object.values(desgloseTotal),
                     backgroundColor: [
-                        'rgba(75, 192, 192, 0.8)',   // Variables - Comida
-                        'rgba(153, 102, 255, 0.8)', // Variables - Ocio
-                        'rgba(255, 159, 64, 0.8)',  // Variables - Transporte
-                        'rgba(255, 99, 132, 0.8)',   // Gastos Fijos
-                        'rgba(54, 162, 235, 0.8)',  // Deudas
-                        'rgba(255, 206, 86, 0.8)'   // Ahorros
+                        'rgba(75, 192, 192, 0.8)',   
+                        'rgba(153, 102, 255, 0.8)', 
+                        'rgba(255, 159, 64, 0.8)',  
+                        'rgba(255, 99, 132, 0.8)',  
+                        'rgba(54, 162, 235, 0.8)',  
+                        'rgba(255, 206, 86, 0.8)'   
                     ]
                 }]
             },
@@ -199,31 +198,38 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
- 
-    formLimites.addEventListener('submit', function(e) {
-        e.preventDefault(); // Evita que la página se recargue
 
-        const nuevoLimiteComida = parseFloat(document.getElementById('limiteComida').value);
-        const nuevoLimiteOcio = parseFloat(document.getElementById('limiteOcio').value);
-        const nuevoLimiteTransporte = parseFloat(document.getElementById('limiteTransporte').value);
+
+    modalLimites.addEventListener('show.bs.modal', function () {
+        const limiteProvisiones = limitesPresupuesto.find(l => l.categoria === "Provisiones")?.limite || 400;
+        const limiteVariables = limitesPresupuesto.find(l => l.categoria === "Gastos Variables")?.limite || 230;
+
+        document.getElementById('limiteProvisiones').value = limiteProvisiones;
+        document.getElementById('limiteVariables').value = limiteVariables;
+    });
+
+    formLimites.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const nuevoLimiteProvisiones = parseFloat(document.getElementById('limiteProvisiones').value);
+        const nuevoLimiteVariables = parseFloat(document.getElementById('limiteVariables').value);
 
         limitesPresupuesto = [
-            { categoria: "Gastos Variables - Comida", limite: nuevoLimiteComida },
-            { categoria: "Gastos Variables - Ocio", limite: nuevoLimiteOcio },
-            { categoria: "Gastos Variables - Transporte", limite: nuevoLimiteTransporte }
+            { categoria: "Provisiones", limite: nuevoLimiteProvisiones },
+            { categoria: "Gastos Variables", limite: nuevoLimiteVariables }
         ];
-        
-        console.log("Nuevos límites guardados:", limitesPresupuesto);
 
-        // 3. Re-renderizar todo el dashboard con los nuevos límites
-        actualizarDashboard();
+ 
+        localStorage.setItem("limitesDePresupuesto", JSON.stringify(limitesPresupuesto));
 
-        // 4. Ocultar el modal (usando la API de Bootstrap)
-        const modal = bootstrap.Modal.getInstance(document.getElementById('modalEstablecerLimites'));
+        console.log("Nuevos límites guardados en localStorage:", limitesPresupuesto);
+
+        actualizarDashboard(); 
+
+        const modal = bootstrap.Modal.getInstance(modalLimites);
         modal.hide();
     });
 
-    // --- 5. INICIALIZACIÓN ---
-    // Llamada inicial al cargar la página para que todo aparezca
-    actualizarDashboard(); 
+  
+    actualizarDashboard();
 });
