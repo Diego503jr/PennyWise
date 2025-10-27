@@ -5,6 +5,7 @@ if (!currentUser) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  //Referencias a los elementos
   const formIngreso = document.getElementById("formIngreso");
   const formGasto = document.getElementById("formGasto");
   const formEditar = document.getElementById("formEditar");
@@ -14,21 +15,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const filtroCategoria = document.getElementById("filtroCategoria");
   const saldoTotal = document.getElementById("saldoTotal");
 
+  //Inicialización fecha y periodo
   const hoy = new Date().toISOString().split("T")[0];
   document.getElementById("fechaIngreso").value = hoy;
   document.getElementById("fechaGasto").value = hoy;
   document.getElementById("periodoIngreso").value = "Mensual";
   document.getElementById("periodoGasto").value = "Mensual";
 
+  //Recupera registros desde local
   let registros =
     JSON.parse(localStorage.getItem(`registros_${currentUser.email}`)) || [];
 
+  //Guarda en local
   const guardarLocal = () =>
     localStorage.setItem(
       `registros_${currentUser.email}`,
       JSON.stringify(registros)
     );
 
+  //Recorre los registros y calcula el saldo total
   const calcularSaldo = () => {
     const total = registros.reduce(
       (acc, r) => (r.tipo === "Ingreso" ? acc + r.monto : acc - r.monto),
@@ -43,17 +48,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const cat = filtroCategoria.value;
     tablaHistorial.innerHTML = "";
 
+    //Filtra registros
     let filtrados = registros;
     if (tipo !== "todos") filtrados = filtrados.filter((r) => r.tipo === tipo);
     if (mes) filtrados = filtrados.filter((r) => r.fecha.startsWith(mes));
     if (cat !== "todas")
       filtrados = filtrados.filter((r) => r.categoria === cat);
 
+    //Agrega filas a la tabla según registros filtrados
+    //Muestra botones de acciones
     filtrados.forEach((r, i) => {
       const fila = document.createElement("tr");
       fila.innerHTML = `
-        <td class="${
-          r.tipo === "Ingreso" ? "text-success fw-bold" : "text-danger fw-bold"
+        <td class="${r.tipo === "Ingreso" ? "text-success fw-bold" : "text-danger fw-bold"
         }">${r.tipo}</td>
         <td>$${r.monto}</td>
         <td>${r.categoria || r.descripcion}</td>
@@ -73,10 +80,32 @@ document.addEventListener("DOMContentLoaded", () => {
     calcularSaldo();
   };
 
+  //Inserta registros, guarda en local y actualiza tabla 
   const agregarRegistro = (registro) => {
     registros.push(registro);
     guardarLocal();
     mostrarHistorial();
+  };
+
+  // Categorías por tipo
+  const categoriasIngreso = ["Salario", "Comisiones", "Venta", "Pago", "Otro"];
+  const categoriasGasto = ["Ahorro", "Provisiones", "Gastos Fijos", "Gastos Variables", "Deudas"];
+
+  //Muestra filtro categoría según tipo
+  const actualizarCategorias = () => {
+    const tipo = filtroTipo.value;
+    filtroCategoria.innerHTML = "";
+
+    if (tipo === "Ingreso") {
+      filtroCategoria.innerHTML = `<option value="todas">Todas</option>` +
+        categoriasIngreso.map(c => `<option value="${c}">${c}</option>`).join("");
+    } else if (tipo === "Gasto") {
+      filtroCategoria.innerHTML = `<option value="todas">Todas</option>` +
+        categoriasGasto.map(c => `<option value="${c}">${c}</option>`).join("");
+    } else {
+      filtroCategoria.innerHTML = `<option value="todas">Todas</option>` +
+        [...categoriasIngreso, ...categoriasGasto].map(c => `<option value="${c}">${c}</option>`).join("");
+    }
   };
 
   // Registrar Ingreso
@@ -125,9 +154,34 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("editarId").value = id;
       document.getElementById("editarMonto").value = r.monto;
       document.getElementById("editarPeriodo").value = r.periodo;
-      document.getElementById("editarCategoria").value = r.categoria || "";
       document.getElementById("editarDescripcion").value = r.descripcion || "";
       document.getElementById("editarFecha").value = r.fecha;
+
+      const selectCategoria = document.getElementById("editarCategoria");
+
+      selectCategoria.innerHTML = "";
+
+      //Muestra categorías según tipo de registro
+      if (r.tipo === "Ingreso") {
+        selectCategoria.innerHTML = `
+      <option value="">Seleccionar Categoría</option>
+      <option value="Salario">Salario</option>
+      <option value="Comisiones">Comisiones</option>
+      <option value="Venta">Venta</option>
+      <option value="Pago">Pago</option>
+      <option value="Otro">Otro</option>`;
+      } else if (r.tipo === "Gasto") {
+        selectCategoria.innerHTML = `
+      <option value="">Seleccionar Categoría</option>
+      <option value="Ahorro">Ahorro</option>
+      <option value="Provisiones">Provisiones</option>
+      <option value="Gastos Fijos">Gastos Fijos</option>
+      <option value="Gastos Variables">Gastos Variables</option>
+      <option value="Deudas">Deudas</option>`;
+      }
+
+      selectCategoria.value = r.categoria || "";
+
       new bootstrap.Modal(document.getElementById("modalEditar")).show();
     }
 
@@ -177,9 +231,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  filtroTipo.addEventListener("change", mostrarHistorial);
+  // Actualizar categorías y mostrar historial al cambiar filtros
+  filtroTipo.addEventListener("change", () => {
+    actualizarCategorias();
+    mostrarHistorial();
+  });
   filtroMes.addEventListener("change", mostrarHistorial);
   filtroCategoria.addEventListener("change", mostrarHistorial);
 
+  // Inicializar categorías y mostrar historial
+  actualizarCategorias();
   mostrarHistorial();
 });
