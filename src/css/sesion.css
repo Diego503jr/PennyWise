@@ -54,11 +54,12 @@ color: var(--btn-text);
 outline: none;
 border-color: var(--input-focus);
 box-shadow: 0 0 0 0.25rem rgba(221, 191, 124, 0.5); 
+}
 
 .form-input:-webkit-autofill,
 .form-input:-webkit-autofill:hover, 
 .form-input:-webkit-autofill:not(:focus) {
-    -webkit-box-shadow: 0 0 0 30px var(--navbar-bg);
+    -webkit-box-shadow: 0 0 0 30px var(--navbar-bg) inset; 
     -webkit-text-fill-color: #ffffff; 
     transition: background-color 5000s ease-in-out 0s;
 }
