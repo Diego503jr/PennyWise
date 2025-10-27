@@ -26,7 +26,7 @@
       <div class="col-1 d-none d-md-block">
         <!-- left spacer for centering -->
       </div>
-        <div class="col-12 col-md-10 text-center d-flex justify-content-center align-items-center">
+      <div class="col-12 col-md-10 text-center d-flex justify-content-center align-items-center">
         <h3 class="fw-bold mb-0 me-3">Metas Ahorro</h3>
         <div id="saldoProvisionesWrap" class="text-muted small d-flex align-items-center gap-2">
           <small class="text-muted">Provisiones disponibles</small>
@@ -56,7 +56,7 @@
         </div>
         <div class="col-md-3" id="metaPeriodosWrapper">
           <label class="form-label">Periodos</label>
-          <input type="number" id="metaPeriodos" class="form-control" placeholder="12" min="1" />
+          <input type="number" id="metaPeriodos" class="form-control" placeholder="Ejemplo: 12" min="1" / required>
         </div>
         <div class="col-md-3" id="metaContribucionWrapper">
           <label class="form-label">Contribución</label>
@@ -97,10 +97,29 @@
           </tbody>
         </table>
       </div>
-      <div id="listaMetasEmpty" class="text-center my-2 d-none">No hay metas registradas. Cree una nueva meta usando el formulario.</div>
+      <div id="listaMetasEmpty" class="text-center my-2 d-none">No hay metas registradas. Cree una nueva meta usando el
+        formulario.</div>
     </section>
     <!-- Historial de Metas -->
     <section class="card mi-tarjeta p-4 mt-4">
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <label for="filtroMetaHistorial" class="form-label">Filtrar por Meta</label>
+          <select id="filtroMetaHistorial" class="form-select">
+            <option value="">Todas las metas</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label for="filtroMesHistorial" class="form-label">Filtrar por Mes</label>
+          <input type="month" id="filtroMesHistorial" class="form-control">
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <button id="btnLimpiarFiltros" class="btn btn-outline-secondary w-100">
+            <i class="bi bi-x-circle"></i> Limpiar filtros
+          </button>
+        </div>
+      </div>
+
       <h5 class="fw-bold text-center mb-3">Historial de Metas</h5>
       <div class="table-responsive">
         <table class="table table-striped table-hover">

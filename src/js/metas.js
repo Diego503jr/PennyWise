@@ -1,492 +1,430 @@
+// Inicialización y utilidades
 const currentUser = JSON.parse(localStorage.getItem('currentUser'));
 if (!currentUser) window.location.href = "./index.html";
+
 const USER_KEY = (currentUser.username || currentUser.email || currentUser.id || 'guest').toString();
-const metasStorageKey = () => `metas_${USER_KEY}`;
-const provisionesStorageKey = () => `provisiones_${USER_KEY}`;
-const getRegistros = () => { try { const raw = localStorage.getItem(`registros_${currentUser.email}`); return raw ? JSON.parse(raw) : []; } catch (e) { return []; } };
+const storageKey = (type) => `${type}_${USER_KEY}`;
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-const getMetas = () => { const raw = localStorage.getItem(metasStorageKey()); return raw ? JSON.parse(raw) : []; };
-const saveMetas = metas => localStorage.setItem(metasStorageKey(), JSON.stringify(metas));
+const numberWithCommas = x => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"}[c]));
 
+// Acceso a datos
+const getMetas = () => JSON.parse(localStorage.getItem(storageKey('metas')) || '[]');
+const saveMetas = m => localStorage.setItem(storageKey('metas'), JSON.stringify(m));
+const getRegistros = () => JSON.parse(localStorage.getItem(`registros_${currentUser.email}`) || '[]');
 
-// --- Helpers asíncronos (simulan llamadas de red)
-const simulateNetwork = (v, d = 220) => new Promise(r => setTimeout(() => r(v), d));
-const getMetasAsync = async () => simulateNetwork(JSON.parse(localStorage.getItem(metasStorageKey()) || '[]'));
-const saveMetasAsync = async m => { localStorage.setItem(metasStorageKey(), JSON.stringify(m)); return simulateNetwork(true, 120) };
-const getRegistrosAsync = async () => simulateNetwork(JSON.parse(localStorage.getItem(`registros_${currentUser.email}`) || '[]'), 140);
-
-// Crear nueva meta y registrar evento de creación en su historial
-async function crearMeta(nombre, objetivo) {
-    const metas = await getMetasAsync();
-    const nueva = {
-        id: uid(),
-        nombre: nombre,
-        objetivo: Number(objetivo),
-        tipo: document.getElementById('metaTipo') ? document.getElementById('metaTipo').value : 'tiempo',
-        periodos: document.getElementById('metaPeriodos') ? Number(document.getElementById('metaPeriodos').value) || 0 : 0,
-        contribucion: document.getElementById('metaContribucion') ? document.getElementById('metaContribucion').value : 'voluntaria',
-        // Si el campo de próxima contribución está vacío (porque el input es disabled y reset() lo limpió),
-        // usamos la fecha de hoy como valor por defecto para asegurar que la nueva meta tenga fecha.
-        nextContribution: (function () {
-            const el = document.getElementById('metaProxima');
-            const hoy = new Date().toISOString().split('T')[0];
-            return el && el.value ? el.value : hoy;
-        })(),
-        actual: 0,
-        creada: new Date().toISOString(),
-        history: [{ action: 'creada', amount: 0, date: new Date().toISOString() }],
-        montoMensual: 0
-    };
-    // calcular monto mensual si hay periodos
-    nueva.montoMensual = nueva.periodos && nueva.periodos > 0 ? Math.round(nueva.objetivo / nueva.periodos) : 0;
-    metas.push(nueva);
-    await saveMetasAsync(metas);
-    await renderMetas();
-    renderHistorialMetas();
-    return nueva.id;
-}
-
-async function eliminarMeta(id) {
-    let metas = await getMetasAsync();
-    metas = metas.filter(m => m.id !== id);
-    await saveMetasAsync(metas);
-    await renderMetas();
-    renderHistorialMetas();
-}
-
-async function editarMeta(id, nombre, objetivo) {
-    const metas = await getMetasAsync();
-    const m = metas.find(x => x.id === id);
-    if (!m) return false;
-    m.nombre = nombre;
-    m.objetivo = Number(objetivo);
-    const tipoEl = document.getElementById('editarMetaTipo');
-    const periodosEl = document.getElementById('editarMetaPeriodos');
-    const contribEl = document.getElementById('editarMetaContribucion');
-    const proximaEl = document.getElementById('editarMetaProxima');
-    if (tipoEl) m.tipo = tipoEl.value;
-    if (periodosEl) m.periodos = Number(periodosEl.value) || 0;
-    if (contribEl) m.contribucion = contribEl.value;
-    if (proximaEl) m.nextContribution = proximaEl.value || '';
-    if (m.actual > m.objetivo) m.actual = m.objetivo;
-    // recalcular monto mensual
-    m.montoMensual = m.periodos && m.periodos > 0 ? Math.round(m.objetivo / m.periodos) : 0;
-    await saveMetasAsync(metas);
-    await renderMetas();
-    renderHistorialMetas();
-    return true;
-}
-
-// Helper de registros: obtener el total de provisiones desde 'registros_<email>'
-function getSaldoFromRegistros() {
-    // suma de montos de registros cuya categoría indica provisión o gasto fijo
+// Cálculo de provisiones
+const calcularProvisiones = () => {
     const registros = getRegistros();
     const pattern = /provisi(?:o|ó)nes?|gasto\s*fijo|gasto_fijo/i;
-    const base = registros.reduce((acc, r) => {
-        if (!r || !r.categoria) return acc;
-        if (pattern.test(String(r.categoria))) return acc + Number(r.monto || 0);
-        return acc;
-    }, 0);
-    // Restar las contribuciones realizadas desde las Metas (persistidas en metas_<user>)
-    let aportes = 0;
-    try {
-        const metas = getMetas();
-        if (Array.isArray(metas)) {
-            metas.forEach(m => {
-                if (!Array.isArray(m.history)) return;
-                m.history.forEach(h => { if (h && h.action === 'aporte') aportes += Number(h.amount || 0); });
-            });
-        }
-    } catch (e) { aportes = 0; }
+    const base = registros.reduce((acc, r) => 
+        r?.categoria && pattern.test(r.categoria) ? acc + Number(r.monto || 0) : acc, 0);
+    
+    const aportes = getMetas().reduce((acc, m) => 
+        acc + (m.history?.reduce((sum, h) => h.action === 'aporte' ? sum + Number(h.amount || 0) : sum, 0) || 0), 0);
+    
     const total = Math.max(0, base - aportes);
-    // guardar en cache local para uso por Metas
-    try { localStorage.setItem(provisionesStorageKey(), JSON.stringify({ total, updatedAt: new Date().toISOString() })); } catch (e) { }
+    localStorage.setItem(storageKey('provisiones'), JSON.stringify({total, updatedAt: new Date().toISOString()}));
     return total;
-}
-
-async function getSaldoFromRegistrosAsync() {
-    const registros = await getRegistrosAsync();
-    const pattern = /provisi(?:o|ó)nes?|gasto\s*fijo|gasto_fijo/i;
-    const base = registros.reduce((acc, r) => {
-        if (!r || !r.categoria) return acc;
-        if (pattern.test(String(r.categoria))) return acc + Number(r.monto || 0);
-        return acc;
-    }, 0);
-    // restar aportes desde metas persistidas
-    let aportes = 0;
-    try {
-        const metas = await getMetasAsync();
-        if (Array.isArray(metas)) {
-            metas.forEach(m => {
-                if (!Array.isArray(m.history)) return;
-                m.history.forEach(h => { if (h && h.action === 'aporte') aportes += Number(h.amount || 0); });
-            });
-        }
-    } catch (e) { aportes = 0; }
-    const total = Math.max(0, base - aportes);
-    try {
-        localStorage.setItem(provisionesStorageKey(), JSON.stringify({ total, updatedAt: new Date().toISOString() }));
-    } catch (e) { }
-    return await simulateNetwork(total, 120);
-}
-
-// Devuelve saldo disponible en el mes actual (ingresos - gastos del mes)
-
-function getProvisionesCached() {
-    try {
-        const raw = localStorage.getItem(provisionesStorageKey());
-        const p = raw ? JSON.parse(raw) : null;
-        return p && typeof p.total !== 'undefined' ? Number(p.total) : getSaldoFromRegistros();
-    } catch (e) { return 0; }
-}
-
-async function getProvisionesCachedAsync() {
-    try {
-        const raw = localStorage.getItem(provisionesStorageKey());
-        const p = raw ? JSON.parse(raw) : null;
-        const total = p && typeof p.total !== 'undefined' ? Number(p.total) : await getSaldoFromRegistrosAsync();
-        return await simulateNetwork(total, 80);
-    } catch (e) { return 0; }
-}
-
-const _regKey = `registros_${currentUser.email}`;
-let _lastRegRaw = localStorage.getItem(_regKey) || '';
-
-async function updateProvisionesDisplayAsync() {
-    const el = document.getElementById('saldoProvisionesDisplay');
-    if (!el) return;
-    try {
-        const total = await getProvisionesCachedAsync();
-        el.textContent = `$${numberWithCommas(Math.round(total || 0))}`;
-    } catch (e) { el.textContent = '$0'; }
-}
-
-
-async function aportarMeta(id, monto) {
-    const metas = await getMetasAsync();
-    const m = metas.find(x => x.id === id);
-    if (!m) return false;
-
-    // Calcular el monto real que se puede aportar
-    const restante = Math.max(0, m.objetivo - m.actual);
-    const montoReal = Math.min(Number(monto), restante);
-
-    m.actual = Number(m.actual) + montoReal;
-    if (m.actual > m.objetivo) m.actual = m.objetivo;
-
-    // registrar en el historial con el monto REAL aportado
-    if (!Array.isArray(m.history)) m.history = [];
-    m.history.push({ action: 'aporte', amount: montoReal, date: new Date().toISOString() });
-    await saveMetasAsync(metas);
-
-    // Reducir provisiones solo con el monto REAL aportado
-    try {
-        const key = provisionesStorageKey();
-        const raw = localStorage.getItem(key);
-        const parsed = raw ? JSON.parse(raw) : { total: getSaldoFromRegistros() };
-        const current = Number(parsed.total || 0);
-        const nuevo = Math.max(0, current - montoReal);  // ⚠️ Usar montoReal en vez de monto
-        parsed.total = nuevo;
-        parsed.updatedAt = new Date().toISOString();
-        localStorage.setItem(key, JSON.stringify(parsed));
-    } catch (e) {
-        // error handling
-    }
-
-    await renderMetas();
-    renderHistorialMetas();
-    await updateProvisionesDisplayAsync();
-    return true;
-}
-
-function updateProvisionesDisplay() {
-    const el = document.getElementById('saldoProvisionesDisplay');
-    if (!el) return;
-    try {
-        const raw = localStorage.getItem(provisionesStorageKey());
-        const parsed = raw ? JSON.parse(raw) : null;
-        let total = parsed && typeof parsed.total !== 'undefined' ? Number(parsed.total) : getSaldoFromRegistros();
-        if (isNaN(total)) total = 0;
-        el.textContent = `$${numberWithCommas(Math.round(total))}`;
-    } catch (e) {
-        el.textContent = '$0';
-    }
-}
-
-const renderHistorialMetas = () => {
-    const tb = document.getElementById('tablaHistorialMetas'); if (!tb) return;
-    const filas = []; getMetas().forEach(m => { if (!Array.isArray(m.history)) return; m.history.slice().reverse().forEach(h => { const acc = escapeHtml(h.action || '-'); const mon = h.amount ? `$${numberWithCommas(h.amount)}` : '-'; const tipo = `${escapeHtml(m.tipo || '-')} / ${mon}`; const fecha = h.date ? escapeHtml((new Date(h.date)).toLocaleString()) : '-'; filas.push(`<tr><td>${escapeHtml(m.nombre)}</td><td>${tipo}</td><td>${acc}</td><td>${fecha}</td></tr>`); }); }); tb.innerHTML = filas.join('\n') || '<tr><td colspan="4">Sin historial</td></tr>'
 };
-// renderMetas: dibuja la tabla de metas en #tablaMetas y enlaza eventos
-async function renderMetas() {
-    const tbody = document.getElementById('tablaMetas');
-    const emptyEl = document.getElementById('listaMetasEmpty');
-    const metas = await getMetasAsync();
-    if (!tbody) {
-        console.warn('tablaMetas no encontrada, renderizado omitido');
-        return;
-    }
-    if (!metas || metas.length === 0) {
-        tbody.innerHTML = '';
-        if (emptyEl) emptyEl.classList.remove('d-none');
-        return;
-    }
-    if (emptyEl) emptyEl.classList.add('d-none');
 
-    const rows = metas.map(meta => {
-        const porcentaje = Math.round((meta.actual / meta.objetivo) * 100) || 0;
-        const aportePorPeriodo = (meta.tipo === 'tiempo' && meta.periodos && meta.periodos > 0) ? Math.round(meta.objetivo / meta.periodos) : 0;
+const getProvisiones = () => {
+    try {
+        const data = JSON.parse(localStorage.getItem(storageKey('provisiones')));
+        return data?.total ?? calcularProvisiones();
+    } catch { return 0; }
+};
 
-        // (se consulta en bloque posterior para evitar await en map)
-        const aporteLabel = aportePorPeriodo > 0 ? `$${numberWithCommas(Math.round(aportePorPeriodo))}` : '-';
-        const proxima = meta.nextContribution ? escapeHtml(meta.nextContribution) : '-';
-        // Usar el mismo diseño que Presupuesto: barra más alta y mostrar % solo si es >10
-        const progresoBar = `<div class="progress" style="height:25px"><div class="progress-bar bg-success" role="progressbar" style="width: ${Math.min(porcentaje, 100)}%" aria-valuenow="${porcentaje}" aria-valuemin="0" aria-valuemax="100">${porcentaje > 10 ? porcentaje + '%' : ''}</div></div>`;
-        const metaCompletada = meta.actual >= meta.objetivo;
+const actualizarDisplayProvisiones = () => {
+    const el = document.getElementById('saldoProvisionesDisplay');
+    if (el) el.textContent = `$${numberWithCommas(Math.round(getProvisiones()))}`;
+};
 
-        const acciones = [];
-        acciones.push(`<button class="btn btn-sm btn-outline-secondary btn-editar" data-id="${meta.id}" title="Editar"><i class="bi bi-pencil"></i><span class="d-none d-sm-inline ms-1">Editar</span></button>`);
-        acciones.push(`<button class="btn btn-sm btn-outline-danger btn-eliminar" data-id="${meta.id}" title="Eliminar"><i class="bi bi-trash"></i><span class="d-none d-sm-inline ms-1">Eliminar</span></button>`);
-
-        // Si la meta está completada, mostrar botón "Completado" deshabilitado
-        if (metaCompletada) {
-            acciones.push(`<button class="btn btn-sm btn-success" disabled title="Meta completada"><i class="bi bi-check-circle-fill"></i><span class="d-none d-sm-inline ms-1">Completado</span></button>`);
-        } else {
-            // Si NO está completada, mostrar botones de contribución normales
-            if (meta.contribucion === 'automatica' && aportePorPeriodo > 0) {
-                acciones.push(`<button class="btn btn-sm btn-auto" data-id="${meta.id}" title="Aportar automático"><i class="bi bi-arrow-repeat"></i><span class="d-none d-sm-inline ms-1">Aportar ${numberWithCommas(Math.round(aportePorPeriodo))}</span></button>`);
-            } else {
-                acciones.push(`<button class="btn btn-sm btn-gold btn-contribuir" data-id="${meta.id}" title="Contribuir"><i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline ms-1">Contribuir</span></button>`);
-            }
-        }
-        return `
-            <tr>
-                <td>${escapeHtml(meta.nombre)}</td>
-                <td>$${numberWithCommas(meta.objetivo)}</td>
-                <td>${meta.tipo === 'tiempo' ? (meta.periodos || '-') : '-'}</td>
-                <td>${aporteLabel}</td>
-                <td>${proxima}</td>
-                <td>$${numberWithCommas(meta.actual)}</td>
-                <td>${progresoBar}</td>
-                <td class="tabla-acciones d-flex gap-2">${acciones.join(' ')}</td>
-            </tr>
-        `;
-    }).join('\n');
-
-    tbody.innerHTML = rows;
-
-    // enlazar eventos
-    document.querySelectorAll('.btn-eliminar').forEach(b => b.addEventListener('click', async e => {
-        const id = e.currentTarget.getAttribute('data-id');
-        if (!id) return;
-        const metasAll = await getMetasAsync();
-        const m = metasAll.find(x => x.id === id);
-        const res = await Swal.fire({
-            title: '¿Eliminar esta meta?',
-            text: `Esta acción no se puede deshacer.\n\n¿Eliminar la meta "${m ? m.nombre : ''}"?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#999',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        });
-        if (res.isConfirmed) {
-            await eliminarMeta(id);
-            Swal.fire('Eliminado', 'La meta ha sido eliminada.', 'success');
-        }
-    }));
-    document.querySelectorAll('.btn-editar').forEach(b => b.addEventListener('click', async e => {
-        const id = e.currentTarget.getAttribute('data-id');
-        if (!id) return;
-        const metasAll = await getMetasAsync();
-        const m = metasAll.find(x => x.id === id);
-        if (!m) return;
-        (document.getElementById('editarMetaId')).value = m.id;
-        (document.getElementById('editarMetaNombre')).value = m.nombre;
-        (document.getElementById('editarMetaObjetivo')).value = m.objetivo;
-        const tipoEl = document.getElementById('editarMetaTipo');
-        const periodosEl = document.getElementById('editarMetaPeriodos');
-        const contribEl = document.getElementById('editarMetaContribucion');
-        const proximaEl = document.getElementById('editarMetaProxima');
-        if (tipoEl) tipoEl.value = m.tipo || 'tiempo';
-        if (periodosEl) periodosEl.value = m.periodos || '';
-        if (contribEl) contribEl.value = m.contribucion || 'voluntaria';
-        if (proximaEl) proximaEl.value = m.nextContribution || '';
-        new bootstrap.Modal(document.getElementById('modalEditarMeta')).show();
-    }));
-
-    document.querySelectorAll('.btn-contribuir').forEach(b => b.addEventListener('click', e => {
-        const id = e.currentTarget.getAttribute('data-id');
-        if (!id) return;
-        (document.getElementById('contribuirId')).value = id;
-        const input = document.getElementById('contribuirMonto');
-        if (input) input.value = '';
-        new bootstrap.Modal(document.getElementById('modalContribuir')).show();
-    }));
-
-    document.querySelectorAll('.btn-auto').forEach(b => b.addEventListener('click', async e => {
-        const id = e.currentTarget.getAttribute('data-id');
-        if (!id) return;
-        const metasAll = await getMetasAsync();
-        const m = metasAll.find(x => x.id === id);
-        if (!m) return;
-        const fijo = (m.tipo === 'tiempo' && m.periodos && m.periodos > 0) ? Math.round(m.objetivo / m.periodos) : 0;
-        if (fijo <= 0) { Swal.fire('Sin aporte', 'No hay aporte definido para esta meta.', 'info'); return; }
-        const restante = Math.max(0, m.objetivo - m.actual);
-        const aporte = Math.min(fijo, restante);
-        const provisiones = await getProvisionesCachedAsync();
-        if (provisiones < aporte) { Swal.fire('Saldo insuficiente', 'Provisiones insuficientes para esta contribución automática.', 'error'); return; }
-        const result = await Swal.fire({
-            title: '¿Confirmar aporte automático?',
-            html: `¿Confirmar aporte automático de <strong>$${numberWithCommas(aporte)}</strong> a '<strong>${escapeHtml(m.nombre)}</strong>'?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#999',
-            confirmButtonText: 'Sí, aportar',
-            cancelButtonText: 'Cancelar'
-        });
-        if (result.isConfirmed) {
-            await aportarMeta(id, aporte);
-            const metasNow = await getMetasAsync();
-            const metaIdx = metasNow.findIndex(x => x.id === id);
-            if (metaIdx !== -1 && metasNow[metaIdx].nextContribution) {
-                const cur = new Date(metasNow[metaIdx].nextContribution);
-                if (!isNaN(cur)) {
-                    cur.setMonth(cur.getMonth() + 1);
-                    metasNow[metaIdx].nextContribution = cur.toISOString().split('T')[0];
-                    await saveMetasAsync(metasNow);
-                }
-            }
-            Swal.fire({ icon: 'success', title: 'Aportado', text: 'La contribución se registró correctamente.', timer: 1400, showConfirmButton: false });
-        }
-    }));
-
-    // Escuchar cambios en registros en otras pestañas para refrescar provisiones
-    window.addEventListener('storage', async (ev) => {
-        if (!ev.key) return;
-        if (ev.key === `registros_${currentUser.email}`) {
-            await getSaldoFromRegistrosAsync();
-            await updateProvisionesDisplayAsync();
-            await renderMetas();
-            renderHistorialMetas();
-        }
+// CRUD Metas
+const crearMeta = (datos) => {
+    const metas = getMetas();
+    const tipo = datos.tipo || 'tiempo';
+    const periodos = Number(datos.periodos) || 0;
+    const objetivo = Number(datos.objetivo);
+    
+    metas.push({
+        id: uid(),
+        nombre: datos.nombre,
+        objetivo,
+        tipo,
+        periodos,
+        contribucion: datos.contribucion || 'voluntaria',
+        nextContribution: datos.nextContribution || new Date().toISOString().split('T')[0],
+        actual: 0,
+        creada: new Date().toISOString(),
+        history: [{action: 'creada', amount: 0, date: new Date().toISOString()}],
+        montoMensual: tipo === 'tiempo' && periodos > 0 ? Math.round(objetivo / periodos) : 0
     });
-}
+    
+    saveMetas(metas);
+    renderMetas();
+    renderHistorial();
+};
 
-// Utilidades
-const numberWithCommas = x => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-const escapeHtml = s => String(s).replace(/&|<|>|\"|'/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": "&#039;" }[c]));
+const eliminarMeta = (id) => {
+    let metas = getMetas();
+    const meta = metas.find(m => m.id === id);
+    
+    if (meta) {
+        const totalAportes = meta.history?.reduce((sum, h) => 
+            h.action === 'aporte' ? sum + Number(h.amount || 0) : sum, 0) || 0;
+        
+        if (totalAportes > 0) {
+            const provisiones = JSON.parse(localStorage.getItem(storageKey('provisiones')) || '{}');
+            provisiones.total = (Number(provisiones.total) || 0) + totalAportes;
+            provisiones.updatedAt = new Date().toISOString();
+            localStorage.setItem(storageKey('provisiones'), JSON.stringify(provisiones));
+        }
+    }
+    
+    saveMetas(metas.filter(m => m.id !== id));
+    renderMetas();
+    renderHistorial();
+    actualizarDisplayProvisiones();
+};
 
-// Eventos DOM
-window.addEventListener('DOMContentLoaded', async () => {
-    // recalcular provisiones y fijar fecha por defecto
-    await getSaldoFromRegistrosAsync();
+const editarMeta = (id, datos) => {
+    const metas = getMetas();
+    const meta = metas.find(m => m.id === id);
+    if (!meta) return;
+    
+    meta.nombre = datos.nombre;
+    meta.objetivo = Number(datos.objetivo);
+    meta.tipo = datos.tipo || meta.tipo;
+    meta.periodos = Number(datos.periodos) || 0;
+    meta.contribucion = datos.contribucion || meta.contribucion;
+    meta.nextContribution = datos.nextContribution || meta.nextContribution;
+    meta.montoMensual = meta.tipo === 'tiempo' && meta.periodos > 0 ? Math.round(meta.objetivo / meta.periodos) : 0;
+    
+    if (meta.actual > meta.objetivo) meta.actual = meta.objetivo;
+    
+    saveMetas(metas);
+    renderMetas();
+    renderHistorial();
+};
+
+const aportarMeta = (id, monto) => {
+    const metas = getMetas();
+    const meta = metas.find(m => m.id === id);
+    if (!meta) return false;
+    
+    const restante = Math.max(0, meta.objetivo - meta.actual);
+    const montoReal = Math.min(Number(monto), restante);
+    
+    meta.actual += montoReal;
+    if (!meta.history) meta.history = [];
+    meta.history.push({action: 'aporte', amount: montoReal, date: new Date().toISOString()});
+    
+    const provisiones = JSON.parse(localStorage.getItem(storageKey('provisiones')) || '{}');
+    provisiones.total = Math.max(0, (Number(provisiones.total) || 0) - montoReal);
+    provisiones.updatedAt = new Date().toISOString();
+    localStorage.setItem(storageKey('provisiones'), JSON.stringify(provisiones));
+    
+    saveMetas(metas);
+    renderMetas();
+    renderHistorial();
+    actualizarDisplayProvisiones();
+    return true;
+};
+
+const archivarMeta = (id) => {
+    const metas = getMetas();
+    const meta = metas.find(m => m.id === id);
+    if (!meta) return false;
+    
+    if (!meta.history) meta.history = [];
+    meta.history.push({action: 'archivada', amount: 0, date: new Date().toISOString()});
+    meta.archivada = true;
+    meta.fechaArchivado = new Date().toISOString();
+    
+    saveMetas(metas);
+    renderMetas();
+    renderHistorial();
+    return true;
+};
+
+// Renderizado
+const renderMetas = () => {
+    const tbody = document.getElementById('tablaMetas');
+    const empty = document.getElementById('listaMetasEmpty');
+    if (!tbody) return;
+    
+    const metas = getMetas().filter(m => !m.archivada);
+    
+    if (!metas.length) {
+        tbody.innerHTML = '';
+        empty?.classList.remove('d-none');
+        return;
+    }
+    
+    empty?.classList.add('d-none');
+    
+    tbody.innerHTML = metas.map(m => {
+        const porc = Math.round((m.actual / m.objetivo) * 100) || 0;
+        const aporte = m.tipo === 'tiempo' && m.periodos > 0 ? Math.round(m.objetivo / m.periodos) : 0;
+        const completada = m.actual >= m.objetivo;
+        
+        const botones = [
+            `<button class="btn btn-sm btn-outline-secondary btn-editar" data-id="${m.id}"><i class="bi bi-pencil"></i><span class="d-none d-sm-inline ms-1">Editar</span></button>`,
+            `<button class="btn btn-sm btn-outline-danger btn-eliminar" data-id="${m.id}"><i class="bi bi-trash"></i><span class="d-none d-sm-inline ms-1">Eliminar</span></button>`
+        ];
+        
+        if (completada) {
+            botones.push(`<button class="btn btn-sm btn-success btn-archivar" data-id="${m.id}"><i class="bi bi-archive"></i><span class="d-none d-sm-inline ms-1">Archivar</span></button>`);
+        } else {
+            if (m.contribucion === 'automatica' && aporte > 0) {
+                botones.push(`<button class="btn btn-sm btn-auto" data-id="${m.id}"><i class="bi bi-arrow-repeat"></i><span class="d-none d-sm-inline ms-1">Aportar ${numberWithCommas(aporte)}</span></button>`);
+            } else {
+                botones.push(`<button class="btn btn-sm btn-gold btn-contribuir" data-id="${m.id}"><i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline ms-1">Contribuir</span></button>`);
+            }
+        }
+        
+        return `<tr>
+            <td>${escapeHtml(m.nombre)}</td>
+            <td>$${numberWithCommas(m.objetivo)}</td>
+            <td>${m.tipo === 'tiempo' ? (m.periodos || '-') : '-'}</td>
+            <td>${aporte > 0 ? '$' + numberWithCommas(aporte) : '-'}</td>
+            <td>${m.nextContribution || '-'}</td>
+            <td>$${numberWithCommas(m.actual)}</td>
+            <td><div class="progress" style="height:25px"><div class="progress-bar bg-success" style="width:${Math.min(porc,100)}%">${porc > 10 ? porc + '%' : ''}</div></div></td>
+            <td class="tabla-acciones d-flex gap-2">${botones.join(' ')}</td>
+        </tr>`;
+    }).join('');
+    
+    vincularEventos();
+};
+
+const renderHistorial = () => {
+    const tb = document.getElementById('tablaHistorialMetas');
+    if (!tb) return;
+    
+    const filtroMeta = document.getElementById('filtroMetaHistorial')?.value || '';
+    const filtroMes = document.getElementById('filtroMesHistorial')?.value || '';
+    const metas = getMetas();
+    
+    // Actualizar select de metas
+    const select = document.getElementById('filtroMetaHistorial');
+    if (select) {
+        const actual = select.value;
+        select.innerHTML = '<option value="">Todas las metas</option>' + 
+            metas.map(m => `<option value="${m.id}">${m.nombre}${m.archivada ? ' (Archivada)' : ''}</option>`).join('');
+        select.value = actual;
+    }
+    
+    const filas = [];
+    metas.forEach(m => {
+        if (!m.history) return;
+        m.history.slice().reverse().forEach(h => {
+            if (filtroMeta && m.id !== filtroMeta) return;
+            if (filtroMes && h.date && !h.date.startsWith(filtroMes)) return;
+            
+            filas.push(`<tr>
+                <td>${escapeHtml(m.nombre)}${m.archivada ? ' 📦' : ''}</td>
+                <td>${escapeHtml(m.tipo || '-')} / ${h.amount ? '$' + numberWithCommas(h.amount) : '-'}</td>
+                <td>${escapeHtml(h.action || '-')}</td>
+                <td>${h.date ? new Date(h.date).toLocaleString() : '-'}</td>
+            </tr>`);
+        });
+    });
+    
+    tb.innerHTML = filas.length ? filas.join('') : '<tr><td colspan="4" class="text-center text-muted">No hay registros</td></tr>';
+};
+
+// Event handlers
+const vincularEventos = () => {
+    document.querySelectorAll('.btn-eliminar').forEach(btn => {
+        btn.onclick = async (e) => {
+            const id = e.currentTarget.dataset.id;
+            const m = getMetas().find(x => x.id === id);
+            const res = await Swal.fire({
+                title: '¿Eliminar esta meta?',
+                text: `¿Eliminar "${m?.nombre}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Sí, eliminar'
+            });
+            if (res.isConfirmed) {
+                eliminarMeta(id);
+                Swal.fire('Eliminado', 'La meta ha sido eliminada.', 'success');
+            }
+        };
+    });
+    
+    document.querySelectorAll('.btn-editar').forEach(btn => {
+        btn.onclick = (e) => {
+            const m = getMetas().find(x => x.id === e.currentTarget.dataset.id);
+            if (!m) return;
+            document.getElementById('editarMetaId').value = m.id;
+            document.getElementById('editarMetaNombre').value = m.nombre;
+            document.getElementById('editarMetaObjetivo').value = m.objetivo;
+            document.getElementById('editarMetaTipo').value = m.tipo || 'tiempo';
+            document.getElementById('editarMetaPeriodos').value = m.periodos || '';
+            document.getElementById('editarMetaContribucion').value = m.contribucion || 'voluntaria';
+            document.getElementById('editarMetaProxima').value = m.nextContribution || '';
+            new bootstrap.Modal(document.getElementById('modalEditarMeta')).show();
+        };
+    });
+    
+    document.querySelectorAll('.btn-contribuir').forEach(btn => {
+        btn.onclick = (e) => {
+            document.getElementById('contribuirId').value = e.currentTarget.dataset.id;
+            document.getElementById('contribuirMonto').value = '';
+            new bootstrap.Modal(document.getElementById('modalContribuir')).show();
+        };
+    });
+    
+    document.querySelectorAll('.btn-auto').forEach(btn => {
+        btn.onclick = async (e) => {
+            const m = getMetas().find(x => x.id === e.currentTarget.dataset.id);
+            if (!m) return;
+            const aporte = Math.min(m.montoMensual, m.objetivo - m.actual);
+            if (getProvisiones() < aporte) {
+                Swal.fire('Saldo insuficiente', 'Provisiones insuficientes.', 'error');
+                return;
+            }
+            const res = await Swal.fire({
+                title: '¿Confirmar aporte?',
+                html: `¿Aportar <strong>$${numberWithCommas(aporte)}</strong> a '<strong>${escapeHtml(m.nombre)}</strong>'?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, aportar'
+            });
+            if (res.isConfirmed) {
+                aportarMeta(m.id, aporte);
+                const metas = getMetas();
+                const meta = metas.find(x => x.id === m.id);
+                if (meta?.nextContribution) {
+                    const fecha = new Date(meta.nextContribution);
+                    fecha.setMonth(fecha.getMonth() + 1);
+                    meta.nextContribution = fecha.toISOString().split('T')[0];
+                    saveMetas(metas);
+                }
+                Swal.fire({icon: 'success', title: 'Aportado', timer: 1400, showConfirmButton: false});
+            }
+        };
+    });
+};
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', () => {
+    calcularProvisiones();
     const hoy = new Date().toISOString().split('T')[0];
     const metaProx = document.getElementById('metaProxima');
     if (metaProx) metaProx.value = hoy;
-    await renderMetas();
-    await updateProvisionesDisplayAsync();
-    renderHistorialMetas();
-
-    // polling: detecta cambios en registros_<email> en la MISMA pestaña
-    setInterval(async () => {
-        try {
-            const raw = localStorage.getItem(_regKey) || '';
-            if (raw !== _lastRegRaw) {
-                _lastRegRaw = raw;
-                // recalc and cache provisiones
-                await getSaldoFromRegistrosAsync();
-                await updateProvisionesDisplayAsync();
-                await renderMetas();
-                renderHistorialMetas();
-            }
-        } catch (e) { }
+    
+    renderMetas();
+    actualizarDisplayProvisiones();
+    renderHistorial();
+    
+    // Listeners de filtros
+    ['filtroMetaHistorial', 'filtroMesHistorial'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', renderHistorial);
+    });
+    
+    document.getElementById('btnLimpiarFiltros')?.addEventListener('click', () => {
+        document.getElementById('filtroMetaHistorial').value = '';
+        document.getElementById('filtroMesHistorial').value = '';
+        renderHistorial();
+    });
+    
+    // Polling registros
+    let lastReg = localStorage.getItem(`registros_${currentUser.email}`) || '';
+    setInterval(() => {
+        const current = localStorage.getItem(`registros_${currentUser.email}`) || '';
+        if (current !== lastReg) {
+            lastReg = current;
+            calcularProvisiones();
+            actualizarDisplayProvisiones();
+            renderMetas();
+            renderHistorial();
+        }
     }, 900);
-
-    const formMeta = document.getElementById('formMeta');
-    formMeta && formMeta.addEventListener('submit', async e => {
+    
+    // Forms
+    document.getElementById('formMeta')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const nombre = document.getElementById('metaNombre').value.trim();
         const objetivo = Number(document.getElementById('metaObjetivo').value);
-        const tipo = document.getElementById('metaTipo') ? document.getElementById('metaTipo').value : 'tiempo';
-        const periodos = document.getElementById('metaPeriodos') ? Number(document.getElementById('metaPeriodos').value) || 0 : 0;
-
-        if (!nombre || !objetivo) return;
-
-        // Calcular montoMensual antes de crear la meta
-        const montoMensual = (tipo === 'tiempo' && periodos > 0) ? Math.round(objetivo / periodos) : 0;
-
-        // Validar si hay suficientes provisiones
-        if (montoMensual > 0) {
-            const provisionesDisponibles = await getProvisionesCachedAsync();
-
-            if (montoMensual > provisionesDisponibles) {
-                await Swal.fire({
-                    icon: 'error',
-                    title: 'Provisiones insuficientes',
-                    html: `<p>No puedes crear esta meta porque el aporte mensual requerido es <strong>${numberWithCommas(montoMensual)}</strong></p>
-                       <p>Tus provisiones disponibles son: <strong>${numberWithCommas(Math.round(provisionesDisponibles))}</strong></p>
-                       <p class="text-muted mt-2">Reduce el objetivo o aumenta los períodos para crear la meta.</p>`,
-                    confirmButtonText: 'Entendido'
-                });
-                return; // No crear la meta
-            }
+        const tipo = document.getElementById('metaTipo').value;
+        const periodos = Number(document.getElementById('metaPeriodos').value) || 0;
+        const montoMensual = tipo === 'tiempo' && periodos > 0 ? Math.round(objetivo / periodos) : 0;
+        
+        if (montoMensual > 0 && montoMensual > getProvisiones()) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Provisiones insuficientes',
+                html: `<p>Aporte mensual: <strong>$${numberWithCommas(montoMensual)}</strong></p>
+                       <p>Provisiones: <strong>$${numberWithCommas(Math.round(getProvisiones()))}</strong></p>`
+            });
+            return;
         }
-
-        // Si pasa la validación, crear la meta normalmente
-        await crearMeta(nombre, objetivo);
-        formMeta.reset();
-        const hoy = new Date().toISOString().split('T')[0];
-        const metaProx = document.getElementById('metaProxima');
+        
+        crearMeta({
+            nombre,
+            objetivo,
+            tipo,
+            periodos,
+            contribucion: document.getElementById('metaContribucion').value,
+            nextContribution: document.getElementById('metaProxima').value
+        });
+        e.target.reset();
         if (metaProx) metaProx.value = hoy;
     });
-
-    const tipoNuevo = document.getElementById('metaTipo');
-    const wrapperNuevo = document.getElementById('metaPeriodosWrapper');
-    const contribNuevo = document.getElementById('metaContribucion');
-    const contribNuevoWrap = document.getElementById('metaContribucionWrapper');
-    if (wrapperNuevo) wrapperNuevo.style.display = '';
-    if (contribNuevoWrap) contribNuevoWrap.style.display = '';
-
-    // mostrar/ocultar periodos en editar
-    const tipoEditar = document.getElementById('editarMetaTipo');
-    const wrapperEditar = document.getElementById('editarMetaPeriodosWrapper');
-
-    const contribEditar = document.getElementById('editarMetaContribucion');
-    const contribEditarWrap = document.getElementById('editarMetaContribucionWrapper');
-    if (wrapperEditar) wrapperEditar.style.display = '';
-    if (contribEditarWrap) contribEditarWrap.style.display = '';
-
-    const formContribuir = document.getElementById('formContribuir');
-    formContribuir && formContribuir.addEventListener('submit', async e => {
+    
+    document.getElementById('formContribuir')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('contribuirId').value;
         const monto = Number(document.getElementById('contribuirMonto').value);
-        if (!id || !monto) return;
-        const provisiones = await getProvisionesCachedAsync();
-        if (provisiones < monto) { Swal.fire('Saldo insuficiente', 'Provisiones insuficientes para realizar la contribución.', 'error'); return; }
-        const ok = await aportarMeta(id, monto);
-        if (ok) {
-            const modalEl = document.getElementById('modalContribuir');
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            modal && modal.hide();
+        
+        if (getProvisiones() < monto) {
+            Swal.fire('Saldo insuficiente', 'Provisiones insuficientes.', 'error');
+            return;
         }
-        formContribuir.reset();
+        
+        if (aportarMeta(id, monto)) {
+            bootstrap.Modal.getInstance(document.getElementById('modalContribuir')).hide();
+        }
+        e.target.reset();
     });
-
-    const formEditar = document.getElementById('formEditarMeta');
-    formEditar && formEditar.addEventListener('submit', async e => {
+    
+    document.getElementById('formEditarMeta')?.addEventListener('submit', (e) => {
         e.preventDefault();
-        const id = document.getElementById('editarMetaId').value;
-        const nombre = document.getElementById('editarMetaNombre').value.trim();
-        const objetivo = document.getElementById('editarMetaObjetivo').value;
-        if (!id || !nombre || !objetivo) return;
-        await editarMeta(id, nombre, objetivo);
-        const modalEl = document.getElementById('modalEditarMeta');
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        modal && modal.hide();
+        editarMeta(document.getElementById('editarMetaId').value, {
+            nombre: document.getElementById('editarMetaNombre').value.trim(),
+            objetivo: document.getElementById('editarMetaObjetivo').value,
+            tipo: document.getElementById('editarMetaTipo').value,
+            periodos: document.getElementById('editarMetaPeriodos').value,
+            contribucion: document.getElementById('editarMetaContribucion').value,
+            nextContribution: document.getElementById('editarMetaProxima').value
+        });
+        bootstrap.Modal.getInstance(document.getElementById('modalEditarMeta')).hide();
     });
-
+    
+    // Botón archivar
+    document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.btn-archivar');
+        if (!btn) return;
+        
+        const meta = getMetas().find(x => x.id === btn.dataset.id);
+        const res = await Swal.fire({
+            title: '¿Archivar meta?',
+            html: `<p>"<strong>${escapeHtml(meta.nombre)}</strong>"</p>
+                   <p class="text-muted">Provisiones ($${numberWithCommas(meta.actual)}) NO se devolverán.</p>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#198754',
+            confirmButtonText: 'Sí, archivar'
+        });
+        
+        if (res.isConfirmed) {
+            archivarMeta(btn.dataset.id);
+            Swal.fire({icon: 'success', title: 'Archivada', timer: 2000, showConfirmButton: false});
+        }
+    });
 });
