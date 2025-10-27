@@ -31,7 +31,8 @@
         <form id="formIngreso">
           <div class="row g-3">
             <div class="col-md-6">
-              <input type="number" id="montoIngreso" class="form-control" placeholder="Monto ($)" required min="1" />
+              <input type="number" id="montoIngreso" class="form-control" placeholder="Monto ($)" required min="1"
+                step="0.01" />
             </div>
             <div class="col-md-6">
               <select id="categoriaIngreso" class="form-select" required>
@@ -67,7 +68,8 @@
         <form id="formGasto">
           <div class="row g-3">
             <div class="col-md-6">
-              <input type="number" id="montoGasto" class="form-control" placeholder="Monto ($)" required min="1" />
+              <input type="number" id="montoGasto" class="form-control" placeholder="Monto ($)" required min="1"
+                step="0.01" />
             </div>
             <div class="col-md-6">
               <select id="categoriaGasto" class="form-select" required>
@@ -109,6 +111,7 @@
 
       <div class="row mb-3">
         <div class="col-lg-4 col-md-4">
+          <label for="filtroTipo" class="form-label fw-bold">Tipo de Movimiento</label>
           <select id="filtroTipo" class="form-select">
             <option value="todos">Todos</option>
             <option value="Ingreso">Ingresos</option>
@@ -116,9 +119,11 @@
           </select>
         </div>
         <div class="col-lg-4 col-md-4">
+          <label for="filtroMes" class="form-label fw-bold">Fecha</label>
           <input type="month" id="filtroMes" class="form-control" />
         </div>
         <div class="col-lg-4 col-md-4">
+          <label for="filtroCategoria" class="form-label fw-bold">Categoría</label>
           <select id="filtroCategoria" class="form-select">
             <option value="todas">Todas las Categorías</option>
             <optgroup label="Ingresos">
@@ -164,7 +169,7 @@
           <input type="hidden" id="editarId" />
           <div class="row g-3">
             <div class="col-md-6">
-              <input type="number" id="editarMonto" class="form-control" required min="1" />
+              <input type="number" id="editarMonto" class="form-control" required min="1" step="0.01" />
             </div>
             <div class="col-md-6">
               <select id="editarCategoria" class="form-select" required>

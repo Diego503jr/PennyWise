@@ -19,6 +19,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const hoy = new Date().toISOString().split("T")[0];
   document.getElementById("fechaIngreso").value = hoy;
   document.getElementById("fechaGasto").value = hoy;
+
+  fechaIngreso.value = hoy;
+  fechaIngreso.max = hoy;
+
+  fechaGasto.value = hoy;
+  fechaGasto.max = hoy;
+
   document.getElementById("periodoIngreso").value = "Mensual";
   document.getElementById("periodoGasto").value = "Mensual";
 
@@ -39,7 +46,26 @@ document.addEventListener("DOMContentLoaded", () => {
       (acc, r) => (r.tipo === "Ingreso" ? acc + r.monto : acc - r.monto),
       0
     );
+
     saldoTotal.textContent = `$${total.toFixed(2)}`;
+
+    // Cambiar color según saldo
+    if (total > 0) {
+      saldoTotal.classList.add("text-success");
+      saldoTotal.classList.remove("text-danger");
+    } else if (total < 0) {
+      saldoTotal.classList.add("text-danger");
+      saldoTotal.classList.remove("text-success");
+    } else {
+      // saldo = 0
+      saldoTotal.classList.remove("text-success", "text-danger");
+    }
+  };
+
+  //Formato fecha DD/MM/AAAA
+  const formatearFecha = (fechaISO) => {
+    const [anio, mes, dia] = fechaISO.split("-");
+    return `${dia}/${mes}/${anio}`;
   };
 
   const mostrarHistorial = () => {
@@ -64,7 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }">${r.tipo}</td>
         <td>$${r.monto}</td>
         <td>${r.categoria || r.descripcion}</td>
-        <td>${r.fecha}</td>
+        <td>${formatearFecha(r.fecha)}</td>
         <td>
           <button class="btn btn-sm btn-outline-primary me-1 editar" data-id="${i}" title="Editar">
             <i class="bi bi-pencil-square"></i>
