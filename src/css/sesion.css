@@ -1,69 +1,77 @@
 :root {
-  --navbar-bg: #455a64;
-  --navbar-text: #ffffff;
-  --btn-bg: #ddbf7c;
-  --btn-text: #2c2c2c;
-  --bg-primary: #f4f6f8;
+--navbar-bg: #455a64;
+--navbar-text: #ffffff;
+--btn-bg: #ddbf7c;
+--btn-text: #2c2c2c;
+--bg-primary: #f4f6f8;
+/* 1. Definición del color de foco */
+--input-focus: var(--btn-bg); 
 }
 
 body, html {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  font-family: "Open Sans", sans-serif;
-  background-color: var(--bg-primary);
+height: 100%;
+margin: 0;
+padding: 0;
+font-family: "Open Sans", sans-serif;
+background-color: var(--bg-primary);
 }
 
 .bg-left {
-  background-color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
+background-color: #ffffff;
+display: flex;
+align-items: center;
+justify-content: center;
+flex-direction: column;
 }
 
 .bg-right {
-  background-color: var(--navbar-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+background-color: var(--navbar-bg);
+display: flex;
+align-items: center;
+justify-content: center;
 }
 
 .logo {
-  max-width: 400px;
+max-width: 400px;
 }
 
 .system-name {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 700;
-  color: var(--btn-bg);
-  margin-bottom: 0.5rem;
+font-family: 'Poppins', sans-serif;
+font-weight: 700;
+color: var(--btn-bg);
+margin-bottom: 0.5rem;
 }
 
+/* 2. ESTADO BASE (EN REPOSO) */
 .form-input {
-  background-color: transparent;
-  color: #ffffff;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+background-color: transparent; /* Fondo oscuro/transparente en reposo */
+color: #ffffff; /* Texto blanco en reposo */
+border: 1px solid #ccc;
+border-radius: 6px;
+transition: background-color 0.3s ease, color 0.3s ease; 
 }
 
 .form-input:focus {
-  outline: none;
-  box-shadow: 0 0 5px var(--input-focus);
-  border-color: var(--input-focus);
+background-color: #ffffff; 
+color: var(--btn-text); 
+outline: none;
+border-color: var(--input-focus);
+box-shadow: 0 0 0 0.25rem rgba(221, 191, 124, 0.5); /* Sombra semitransparente del color del botón */
 }
+
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover, 
+.form-input:-webkit-autofill:not(:focus) {
+    -webkit-box-shadow: 0 0 0 30px var(--navbar-bg) inset; /* Inserta el color de fondo oscuro */
+    -webkit-text-fill-color: #ffffff; /* Mantiene el texto blanco en este estado */
+    transition: background-color 5000s ease-in-out 0s;
+}
+
 
 .btn-login {
-  background-color: var(--btn-bg);
-  color: var(--btn-text);
-  font-weight: 600;
-  border-radius: 6px;
-  border: 1px solid #ddbf7c;
-  padding: 10px 0;
-  transition: 0.3s;
-}
-
-.btn-login:hover {
-  opacity: 0.95;
-  border: 1px solid #ddbf7c;
+background-color: var(--btn-bg);
+color: var(--btn-text);
+font-weight: 600;
+border-radius: 6px;
+border: 1px solid #ddbf
 }
