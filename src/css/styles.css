@@ -13,15 +13,23 @@
   font-family: "Open Sans", sans-serif;
 }
 
+html,
 body {
   margin: 0;
   padding: 0;
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
   font-family: "Open Sans", sans-serif;
   background: var(--bg-primary);
 }
 
 /* TOMAR ESTO PARA EL FIXED DEL NAV */
 main {
+  flex: 1;
   padding-top: 8em;
 }
 
@@ -33,6 +41,9 @@ main {
 /* FOOTER */
 .custom-footer {
   background-color: var(--navbar-bg);
+  color: var(--navbar-text);
+  text-align: center;
+  padding: 1em 0;
 }
 
 /* LINKS */
@@ -77,7 +88,7 @@ main {
 }
 
 /* Presupuesto */
-.mi-tarjeta {
+.tarjeta {
   border-radius: 0.75rem;
 
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -87,7 +98,7 @@ main {
   border: none !important;
 }
 
-.mi-tarjeta:hover {
+.tarjeta:hover {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
   transform: translateY(-3px);
 }
