@@ -30,11 +30,96 @@ document.addEventListener("DOMContentLoaded", () => {
         saldoTotal.textContent = `$${total.toFixed(2)}`;
     };
 
+    const cargarOpcionesCategoria = (tipo, selectElement) => {
+        selectElement.innerHTML = "";
+        const optDefault = document.createElement("option");
+        optDefault.value = "";
+        optDefault.textContent = "Seleccionar Categoría";
+        selectElement.appendChild(optDefault);
+
+        const opciones =
+            tipo === "Ingreso"
+                ? ["Salario", "Comisiones", "Venta", "Pago", "Otro"]
+                : ["Ahorro", "Provisiones", "Gastos Fijos", "Gastos Variables", "Deudas"];
+
+        opciones.forEach((op) => {
+            const option = document.createElement("option");
+            option.value = op;
+            option.textContent = op;
+            selectElement.appendChild(option);
+        });
+    };
+
     const mostrarHistorial = () => {
         const tipo = filtroTipo.value;
         const mes = filtroMes.value;
         const cat = filtroCategoria.value;
         tablaHistorial.innerHTML = "";
+
+        const categorias = {
+            ingresos: ["Salario", "Comisiones", "Venta", "Pago", "Otro"],
+            gastos: ["Ahorro", "Provisiones", "Gastos Fijos", "Gastos Variables", "Deudas"]
+        };
+
+        const actualizarFiltroCategorias = () => {
+            const tipoSeleccionado = filtroTipo.value;
+            const valorPrevio = filtroCategoria.value; 
+
+            filtroCategoria.innerHTML = ""; 
+
+            const optionTodas = document.createElement("option");
+            optionTodas.value = "todas";
+            optionTodas.textContent = "Todas las Categorías";
+            filtroCategoria.appendChild(optionTodas);
+
+            if (tipoSeleccionado === "todos") {
+                const optgroupIngresos = document.createElement("optgroup");
+                optgroupIngresos.label = "Ingresos";
+                categorias.ingresos.forEach(cat => {
+                    const option = document.createElement("option");
+                    option.value = cat;
+                    option.textContent = cat;
+                    optgroupIngresos.appendChild(option);
+                });
+
+                const optgroupGastos = document.createElement("optgroup");
+                optgroupGastos.label = "Gastos";
+                categorias.gastos.forEach(cat => {
+                    const option = document.createElement("option");
+                    option.value = cat;
+                    option.textContent = cat;
+                    optgroupGastos.appendChild(option);
+                });
+
+                filtroCategoria.appendChild(optgroupIngresos);
+                filtroCategoria.appendChild(optgroupGastos);
+            } else if (tipoSeleccionado === "Ingreso") {
+                categorias.ingresos.forEach(cat => {
+                    const option = document.createElement("option");
+                    option.value = cat;
+                    option.textContent = cat;
+                    filtroCategoria.appendChild(option);
+                });
+            } else if (tipoSeleccionado === "Gasto") {
+                categorias.gastos.forEach(cat => {
+                    const option = document.createElement("option");
+                    option.value = cat;
+                    option.textContent = cat;
+                    filtroCategoria.appendChild(option);
+                });
+            }
+
+            if ([...filtroCategoria.options].some(opt => opt.value === valorPrevio)) {
+                filtroCategoria.value = valorPrevio;
+            } else {
+                filtroCategoria.value = "todas"; 
+            }
+        };
+
+
+        actualizarFiltroCategorias();
+
+        filtroTipo.addEventListener("change", actualizarFiltroCategorias);
 
         let filtrados = registros;
         if (tipo !== "todos") filtrados = filtrados.filter(r => r.tipo === tipo);
@@ -118,6 +203,11 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("editarCategoria").value = r.categoria || "";
             document.getElementById("editarDescripcion").value = r.descripcion || "";
             document.getElementById("editarFecha").value = r.fecha;
+
+            const selectCategoria = document.getElementById("editarCategoria");
+            cargarOpcionesCategoria(r.tipo, selectCategoria);
+            selectCategoria.value = r.categoria || "";
+
             new bootstrap.Modal(document.getElementById("modalEditar")).show();
         }
 
