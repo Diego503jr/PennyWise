@@ -4,7 +4,6 @@
 --btn-bg: #ddbf7c;
 --btn-text: #2c2c2c;
 --bg-primary: #f4f6f8;
-/* 1. Definición del color de foco */
 --input-focus: var(--btn-bg); 
 }
 
@@ -42,10 +41,8 @@ color: var(--btn-bg);
 margin-bottom: 0.5rem;
 }
 
-/* 2. ESTADO BASE (EN REPOSO) */
 .form-input {
-background-color: transparent; /* Fondo oscuro/transparente en reposo */
-color: #ffffff; /* Texto blanco en reposo */
+background-color: transparent; 
 border: 1px solid #ccc;
 border-radius: 6px;
 transition: background-color 0.3s ease, color 0.3s ease; 
@@ -56,14 +53,13 @@ background-color: #ffffff;
 color: var(--btn-text); 
 outline: none;
 border-color: var(--input-focus);
-box-shadow: 0 0 0 0.25rem rgba(221, 191, 124, 0.5); /* Sombra semitransparente del color del botón */
-}
+box-shadow: 0 0 0 0.25rem rgba(221, 191, 124, 0.5); 
 
 .form-input:-webkit-autofill,
 .form-input:-webkit-autofill:hover, 
 .form-input:-webkit-autofill:not(:focus) {
-    -webkit-box-shadow: 0 0 0 30px var(--navbar-bg) inset; /* Inserta el color de fondo oscuro */
-    -webkit-text-fill-color: #ffffff; /* Mantiene el texto blanco en este estado */
+    -webkit-box-shadow: 0 0 0 30px var(--navbar-bg);
+    -webkit-text-fill-color: #ffffff; 
     transition: background-color 5000s ease-in-out 0s;
 }
 
