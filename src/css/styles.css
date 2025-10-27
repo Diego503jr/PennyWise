@@ -46,6 +46,13 @@ main {
   opacity: 0.8;
 }
 
+/* CONTENEDORES TIPO CARD */
+.contenedores-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6em 16em rgba(0, 0, 0, 0.12);
+  transition: all 0.3s ease-in-out 0s;
+}
+
 /* BOTÓN */
 .btn-login {
   background-color: var(--btn-bg);
@@ -56,6 +63,7 @@ main {
   border-radius: 6px;
   border: none;
   transition: 0.3s;
+  text-decoration: none;
 }
 
 .btn-login:hover {
@@ -68,15 +76,11 @@ main {
   color: var(--btn-bg);
 }
 
-
-
-
-
 /* Presupuesto */
 .mi-tarjeta {
-  border-radius: 0.75rem ;
+  border-radius: 0.75rem;
 
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) ;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 
   transition: all 0.2s ease-in-out;
 

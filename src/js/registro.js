@@ -1,3 +1,9 @@
+//Obtener usuario actual
+const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+if (!currentUser) {
+    window.location.href = "./index.html";
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const formIngreso = document.getElementById("formIngreso");
     const formGasto = document.getElementById("formGasto");
@@ -14,9 +20,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("periodoIngreso").value = "Mensual";
     document.getElementById("periodoGasto").value = "Mensual";
 
-    let registros = JSON.parse(localStorage.getItem("registros")) || [];
+    let registros = JSON.parse(localStorage.getItem(`registros_${currentUser.email}`)) || [];
 
-    const guardarLocal = () => localStorage.setItem("registros", JSON.stringify(registros));
+    const guardarLocal = () => localStorage.setItem(`registros_${currentUser.email}`, JSON.stringify(registros));
+
 
     const calcularSaldo = () => {
         const total = registros.reduce((acc, r) => r.tipo === "Ingreso" ? acc + r.monto : acc - r.monto, 0);
