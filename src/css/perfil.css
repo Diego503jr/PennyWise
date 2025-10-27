@@ -1,0 +1,33 @@
+.min-vh-85 {
+    min-height: 85vh;
+}
+
+.profile-icon {
+    font-size: 5rem;
+    color: var(--btn-bg); 
+}
+
+.profile-title {
+    color: var(--navbar-bg);
+}
+
+.profile-info i {
+    width: 25px; 
+    color: var(--navbar-bg);
+}
+
+.btn-outline-secondary {
+    --bs-btn-border-color: var(--navbar-bg);
+    --bs-btn-hover-bg: var(--navbar-bg);
+    --bs-btn-hover-color: var(--navbar-text);
+    --bs-btn-active-bg: var(--navbar-bg);
+}
+
+/* MODALES */
+.modal-header {
+    background-color: var(--navbar-bg);
+    color: var(--navbar-text);
+}
+.modal-title {
+    color: var(--navbar-text);
+}
