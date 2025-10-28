@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   //   Cargamos el nav y el footer
-  loadHTML("navbar", "./componentes/navbar.html", () => {
+  loadHTML("navbar", "../componentes/navbar.html", () => {
     //  Agregamos el nombre del usuario al boton
     const nombreToButton = document.getElementById("btn-profile");
 
@@ -34,5 +34,5 @@ document.addEventListener("DOMContentLoaded", function () {
     //  Lo asignamos el boton
     nombreToButton.textContent = currentUser.name;
   });
-  loadHTML("footer", "./componentes/footer.html");
+  loadHTML("footer", "../componentes/footer.html");
 });

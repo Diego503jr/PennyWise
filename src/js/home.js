@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", async (e) => {
       const fila = document.createElement("tr");
       fila.innerHTML = `
       <td>${e.nombre}</td>
-      <td>$ ${getMonthPerMetas(e.objetivo, e.periodo)}</td>
+      <td>$ ${getMonthPerMetas(e.objetivo, e.periodos)}</td>
     `;
       tbodyAppend.appendChild(fila);
     });
@@ -100,5 +100,5 @@ function getMonthPerMetas(obj, per) {
   const result = obj / per;
 
   //  No validamos que el divisor sea 0 porque aqui se valida si es nan se muestra 0 sino se muestra el resultado
-  return isNaN(result) ? 0 : result;
+  return isNaN(result) ? 0 : result.toFixed(2);
 }

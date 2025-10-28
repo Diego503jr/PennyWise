@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pennywise | Metas</title>
+    <!-- Fuentes y Bootstrap -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
+    />
+    <link rel="stylesheet" href="../css/metas.css" />
+    <link rel="stylesheet" href="../css/styles.css" />
+  </head>
+
+  <body>
+    <!--NavBar-->
+    <div id="navbar"></div>
+
+    <main class="container mt-4 mb-5">
+      <div class="row align-items-center py-3">
+        <div class="col-1 d-none d-md-block">
+          <!-- left spacer for centering -->
+        </div>
+        <div
+          class="col-12 col-md-10 text-center d-flex justify-content-center align-items-center"
+        >
+          <h3 class="fw-bold mb-0 me-3">Metas Ahorro</h3>
+          <div
+            id="saldoProvisionesWrap"
+            class="text-muted small d-flex align-items-center gap-2"
+          >
+            <small class="text-muted">Provisiones disponibles</small>
+            <span
+              id="saldoProvisionesDisplay"
+              class="badge bg-primary py-2 px-3"
+              style="font-size: 0.95rem"
+              >$0</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- formulario nueva meta -->
+      <section class="card mi-tarjeta p-4 mt-4">
+        <h5 class="fw-bold text-center mb-3">Nueva Meta</h5>
+        <form id="formMeta" class="row g-3 align-items-end">
+          <div class="col-md-6">
+            <label class="form-label">Nombre</label>
+            <input
+              type="text"
+              id="metaNombre"
+              class="form-control"
+              placeholder="Ej: Fondo emergencias"
+              required
+            />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Tipo</label>
+            <input type="hidden" id="metaTipo" value="tiempo" />
+            <input class="form-control" value="Por tiempo" disabled />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Monto objetivo ($)</label>
+            <input
+              type="number"
+              id="metaObjetivo"
+              class="form-control"
+              placeholder="1000"
+              min="1"
+              required
+            />
+          </div>
+          <div class="col-md-3" id="metaPeriodosWrapper">
+            <label class="form-label">Periodos</label>
+            <input type="number" id="metaPeriodos" class="form-control"
+            placeholder="Ejemplo: 12" min="1" / required>
+          </div>
+          <div class="col-md-3" id="metaContribucionWrapper">
+            <label class="form-label">Contribución</label>
+            <select id="metaContribucion" class="form-select">
+              <option value="voluntaria">Voluntaria</option>
+              <option value="automatica">Automática</option>
+            </select>
+          </div>
+          <div class="col-md-3" id="metaProximaWrapper">
+            <label class="form-label">Próxima contribución</label>
+            <input type="date" id="metaProxima" class="form-control" disabled />
+          </div>
+          <div class="col-md-3 text-end">
+            <button type="submit" class="btn btn-login mt-3">Registrar</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Metas listado (tabla) -->
+      <section class="card mi-tarjeta p-4 mt-4">
+        <h5 class="fw-bold text-center mb-3">Mis Metas</h5>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Objetivo</th>
+                <th>Periodos</th>
+                <th>Aporte/Periodo</th>
+                <th>Próxima</th>
+                <th>Actual</th>
+                <th>Progreso</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaMetas">
+              <!-- filas inyectadas por JS -->
+            </tbody>
+          </table>
+        </div>
+        <div id="listaMetasEmpty" class="text-center my-2 d-none">
+          No hay metas registradas. Cree una nueva meta usando el formulario.
+        </div>
+      </section>
+      <!-- Historial de Metas -->
+      <section class="card mi-tarjeta p-4 mt-4">
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label for="filtroMetaHistorial" class="form-label"
+              >Filtrar por Meta</label
+            >
+            <select id="filtroMetaHistorial" class="form-select">
+              <option value="">Todas las metas</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label for="filtroMesHistorial" class="form-label"
+              >Filtrar por Mes</label
+            >
+            <input type="month" id="filtroMesHistorial" class="form-control" />
+          </div>
+          <div class="col-md-4 d-flex align-items-end">
+            <button
+              id="btnLimpiarFiltros"
+              class="btn btn-outline-secondary w-100"
+            >
+              <i class="bi bi-x-circle"></i> Limpiar filtros
+            </button>
+          </div>
+        </div>
+
+        <h5 class="fw-bold text-center mb-3">Historial de Metas</h5>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Meta</th>
+                <th>Tipo / Monto</th>
+                <th>Acción</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody id="tablaHistorialMetas">
+              <!-- filas inyectadas por JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- modal contribuir -->
+      <div class="modal fade" id="modalContribuir" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+          <div class="modal-content p-3">
+            <h6 class="fw-bold mb-3">Contribuir a meta</h6>
+            <form id="formContribuir">
+              <input type="hidden" id="contribuirId" />
+              <div class="mb-3">
+                <label class="form-label">Monto a aportar ($)</label>
+                <input
+                  type="number"
+                  id="contribuirMonto"
+                  class="form-control"
+                  min="1"
+                  required
+                />
+              </div>
+              <div class="text-end">
+                <button
+                  type="button"
+                  class="btn btn-secondary me-2"
+                  data-bs-dismiss="modal"
+                >
+                  Cancelar
+                </button>
+                <button type="submit" class="btn btn-gold">Aportar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- modal editar -->
+      <div class="modal fade" id="modalEditarMeta" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content p-3">
+            <h6 class="fw-bold mb-3">Editar Meta</h6>
+            <form id="formEditarMeta">
+              <input type="hidden" id="editarMetaId" />
+              <div class="row g-3">
+                <div class="col-md-8">
+                  <label class="form-label">Nombre</label>
+                  <input
+                    type="text"
+                    id="editarMetaNombre"
+                    class="form-control"
+                    required
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Objetivo ($)</label>
+                  <input
+                    type="number"
+                    id="editarMetaObjetivo"
+                    class="form-control"
+                    min="1"
+                    required
+                  />
+                </div>
+                <div class="col-md-4" id="editarMetaTipoWrapper">
+                  <label class="form-label">Tipo</label>
+                  <select id="editarMetaTipo" class="form-select">
+                    <option value="tiempo">Por tiempo</option>
+                  </select>
+                </div>
+                <div class="col-md-4" id="editarMetaPeriodosWrapper">
+                  <label class="form-label">Periodos</label>
+                  <input
+                    type="number"
+                    id="editarMetaPeriodos"
+                    class="form-control"
+                    min="1"
+                  />
+                </div>
+                <div class="col-md-4" id="editarMetaContribucionWrapper">
+                  <label class="form-label">Contribución</label>
+                  <select id="editarMetaContribucion" class="form-select">
+                    <option value="voluntaria">Voluntaria</option>
+                    <option value="automatica">Automática</option>
+                  </select>
+                </div>
+                <div class="col-md-4" id="editarMetaProximaWrapper">
+                  <label class="form-label">Próxima contribución</label>
+                  <input
+                    type="date"
+                    id="editarMetaProxima"
+                    class="form-control"
+                  />
+                </div>
+              </div>
+              <div class="text-end mt-3">
+                <button
+                  type="button"
+                  class="btn btn-secondary me-2"
+                  data-bs-dismiss="modal"
+                >
+                  Cancelar
+                </button>
+                <button type="submit" class="btn btn-gold">Guardar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- modal eliminar meta -->
+      <div class="modal fade" id="modalEliminarMeta" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+          <div class="modal-content p-3">
+            <h6 class="fw-bold mb-3">Confirmar eliminación</h6>
+            <p id="eliminarMetaTexto">¿Eliminar esta meta?</p>
+            <div class="text-end mt-3">
+              <button
+                type="button"
+                class="btn btn-secondary me-2"
+                data-bs-dismiss="modal"
+              >
+                Cancelar
+              </button>
+              <button
+                id="confirmarEliminarMeta"
+                type="button"
+                class="btn btn-danger"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div id="footer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.js"></script>
+    <script src="../js/metas.js"></script>
+    <script src="../js/addFooterNav.js"></script>
+  </body>
+</html>

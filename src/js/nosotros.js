@@ -108,4 +108,4 @@ function cargarTestimonios() {
 }
 
 //  Llamos a la funcion al cargar la view
-document.addEventListener("DOMContentLoaded", cargarTestimoniosAlCarousel);
+document.addEventListener("DOMContentLoaded", cargarTestimonios());
