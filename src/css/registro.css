@@ -6,16 +6,16 @@
 }
 
 * {
-  margin: 0;
-  padding: 0;
-  font-family: "Open Sans", sans-serif;
+    margin: 0;
+    padding: 0;
+    font-family: "Open Sans", sans-serif;
 }
 
 body {
-  margin: 0;
-  padding: 0;
-  font-family: "Open Sans", sans-serif;
-  background: var(--bg-primary);
+    margin: 0;
+    padding: 0;
+    font-family: "Open Sans", sans-serif;
+    background: var(--bg-primary);
 }
 
 #periodoIngreso,
@@ -28,6 +28,7 @@ body {
     display: flex;
     flex-direction: row;
     gap: 20px;
+    flex-wrap: wrap;
 }
 
 .mi-tarjeta {
@@ -127,7 +128,41 @@ section.card.mi-tarjeta input[type="month"] {
 input[type="month"] {
     cursor: pointer;
 }
+
 #formularioPrincipal {
-  width: 50%;
-  float: left;
+    width: 50%;
+    float: left;
+}
+
+#formularioPrincipal {
+    flex: 1 1 45%;
+    min-width: 280px;
+}
+
+#graficoContainer {
+    flex: 1 1 45%;
+    min-width: 280px;
+    position: relative;
+    width: 100%;
+    height: auto;
+}
+
+#graficoIngresos {
+    width: 100% !important;
+    height: auto !important;
+    max-height: none;
+    aspect-ratio: 16 / 9;
+}
+
+@media (max-width: 576px) {
+    .forms-sections {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    #formularioPrincipal {
+        flex: 1 1 100%;
+        min-width: auto;
+        width: 100%;
+    }
 }

@@ -14,7 +14,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const filtroCategoria = document.getElementById("filtroCategoria");
   const saldoTotal = document.getElementById("saldoTotal");
 
-  // Inicialización fecha (ajustada a zona local)
+  // ---------- GRÁFICO DE LÍNEAS ----------
+  const graficoCanvas = document.getElementById("graficoIngresos");
+  graficoCanvas.id = "graficoIngresos";
+  graficoCanvas.classList.add("my-4");
+  const historialSection = document.querySelector("main .tarjeta:last-of-type");
+  if (historialSection) historialSection.appendChild(graficoCanvas);
+
+  let graficoIngresos = null; // referencia al gráfico
+
+  // Inicialización fecha (zona local)
   const hoy = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
     .toISOString()
     .split("T")[0];
@@ -38,7 +47,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const guardarLocal = () =>
     localStorage.setItem(registrosKey, JSON.stringify(registros));
 
-  // Formateo y utilidades
   const formatCurrency = (n) =>
     n.toLocaleString("es-SV", { style: "currency", currency: "USD" });
 
@@ -49,15 +57,8 @@ document.addEventListener("DOMContentLoaded", () => {
     );
     if (saldoTotal) {
       saldoTotal.textContent = formatCurrency(total);
-      if (total > 0) {
-        saldoTotal.classList.add("text-success");
-        saldoTotal.classList.remove("text-danger");
-      } else if (total < 0) {
-        saldoTotal.classList.add("text-danger");
-        saldoTotal.classList.remove("text-success");
-      } else {
-        saldoTotal.classList.remove("text-success", "text-danger");
-      }
+      saldoTotal.classList.toggle("text-success", total > 0);
+      saldoTotal.classList.toggle("text-danger", total < 0);
     }
   };
 
@@ -67,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${dia}/${mes}/${anio}`;
   };
 
-  // Mostrar historial en la tabla
+  // ---------- HISTORIAL ----------
   const mostrarHistorial = () => {
     const tipo = filtroTipo ? filtroTipo.value : "todos";
     const mes = filtroMes ? filtroMes.value : "";
@@ -101,38 +102,51 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     calcularSaldo();
+    actualizarGraficoIngresos();
   };
 
-  // Categorías por tipo
+  // ---------- CATEGORÍAS ----------
   const categoriasIngreso = ["Salario", "Comisiones", "Venta", "Pago", "Otro"];
   const categoriasGasto = ["Ahorro", "Gastos Fijos", "Gastos Variables", "Deudas"];
 
-  // Actualizar filtro de categorías
   const actualizarCategorias = () => {
     if (!filtroCategoria) return;
     const tipo = filtroTipo ? filtroTipo.value : "";
-    filtroCategoria.innerHTML = "";
+    filtroCategoria.innerHTML = `<option value="todas">Todas</option>`;
 
-    if (tipo === "Ingreso") {
-      filtroCategoria.innerHTML = `<option value="todas">Todas</option>` +
-        categoriasIngreso.map(c => `<option value="${c}">${c}</option>`).join("");
-    } else if (tipo === "Gasto") {
-      filtroCategoria.innerHTML = `<option value="todas">Todas</option>` +
-        categoriasGasto.map(c => `<option value="${c}">${c}</option>`).join("");
-    } else {
-      filtroCategoria.innerHTML = `<option value="todas">Todas</option>` +
-        [...categoriasIngreso, ...categoriasGasto].map(c => `<option value="${c}">${c}</option>`).join("");
-    }
+    let lista = [];
+    if (tipo === "Ingreso") lista = categoriasIngreso;
+    else if (tipo === "Gasto") lista = categoriasGasto;
+    else lista = [...categoriasIngreso, ...categoriasGasto];
+
+    lista.forEach((c) => {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      filtroCategoria.appendChild(opt);
+    });
   };
 
-  // FORMULARIO UNIFICADO
+  // ---------- FORMULARIO ----------
   const tipoRegistro = document.getElementById("tipoRegistro");
   const categoriaRegistro = document.getElementById("categoriaRegistro");
 
+  // Deshabilitar select de categorías inicialmente
+  if (categoriaRegistro) categoriaRegistro.disabled = true;
+
   if (tipoRegistro && categoriaRegistro) {
     tipoRegistro.addEventListener("change", () => {
-      categoriaRegistro.innerHTML = `<option value="">Seleccionar Categoría</option>`;
       const tipo = tipoRegistro.value;
+
+      categoriaRegistro.innerHTML = `<option value="">Seleccionar Categoría</option>`;
+
+      if (!tipo) {
+        categoriaRegistro.disabled = true;
+        return;
+      }
+
+      categoriaRegistro.disabled = false;
+
       const categorias = tipo === "Ingreso" ? categoriasIngreso : tipo === "Gasto" ? categoriasGasto : [];
       categorias.forEach((c) => {
         const opt = document.createElement("option");
@@ -143,18 +157,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+
   // ---------- VALIDACIÓN DE LÍMITES ----------
   function leerLimites() {
     const raw = localStorage.getItem(limitesKey);
     try {
       const parsed = raw ? JSON.parse(raw) : [];
-      return (parsed || []).map(p => {
-        if (!p || typeof p !== "object") return null;
-        return {
-          categoria: (p.categoria ?? p.cat ?? "").toString().trim(),
-          limite: Number(p.limite ?? p.monto ?? 0)
-        };
-      }).filter(Boolean);
+      return (parsed || []).map(p => ({
+        categoria: (p.categoria ?? p.cat ?? "").toString().trim(),
+        limite: Number(p.limite ?? p.monto ?? 0)
+      })).filter(Boolean);
     } catch {
       return [];
     }
@@ -162,13 +174,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function obtenerLimiteParaCategoria(categoria) {
     const limites = leerLimites();
-    const buscada = categoria.toLowerCase().trim();
-    return limites.find(l => l.categoria.toLowerCase().trim() === buscada);
+    return limites.find(l => l.categoria.toLowerCase().trim() === categoria.toLowerCase().trim());
   }
 
   function validaNoSuperaLimite(categoria, montoNuevo, idEditar = null) {
     const limiteObj = obtenerLimiteParaCategoria(categoria);
-    if (!limiteObj) return { ok: true }; // sin límite definido
+    if (!limiteObj) return { ok: true };
 
     const gastosActuales = registros
       .filter((r, i) => r.tipo === "Gasto" && r.categoria?.toLowerCase().trim() === categoria.toLowerCase().trim() && i !== idEditar)
@@ -209,19 +220,24 @@ document.addEventListener("DOMContentLoaded", () => {
           const d = resultado.detalle;
           Swal.fire({
             icon: "error",
-            title: "Límite excedido",
+            title: "Límite de presupuesto excedido",
             html: `
-              <strong>${resultado.categoria}</strong><br>
-              Límite: ${formatCurrency(d.limite)}<br>
-              Gastado actualmente: ${formatCurrency(d.gastosActuales)}<br>
-              Intentas agregar: ${formatCurrency(monto)}<br>
-              Total resultante: ${formatCurrency(d.totalConNuevo)}<br><br>
-              <small>${d.restante > 0 ? `Te quedan ${formatCurrency(d.restante)}.` : "No queda presupuesto disponible."}</small>
-            `
+        <strong>${resultado.categoria}</strong><br>
+        Límite: ${formatCurrency(d.limite)}<br>
+        Total después de agregar: ${formatCurrency(d.totalConNuevo)}
+      `,
+            showCancelButton: true,
+            confirmButtonText: "Ir a Presupuestos",
+            cancelButtonText: "Ok"
+          }).then((res) => {
+            if (res.isConfirmed) {
+              window.location.href = "presupuestos.html";
+            }
           });
           return;
         }
       }
+
 
       registros.push({ tipo, monto, periodo: "Mensual", categoria, descripcion, fecha });
       guardarLocal();
@@ -243,7 +259,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const id = Number(btn.dataset.id);
     const r = registros[id];
 
-    // EDITAR
     if (btn.classList.contains("editar")) {
       document.getElementById("editarId").value = id;
       document.getElementById("editarMonto").value = r.monto;
@@ -253,7 +268,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const selectCategoria = document.getElementById("editarCategoria");
       selectCategoria.innerHTML = "";
-
       const categorias = r.tipo === "Ingreso" ? categoriasIngreso : categoriasGasto;
       categorias.forEach((c) => {
         const opt = document.createElement("option");
@@ -266,7 +280,6 @@ document.addEventListener("DOMContentLoaded", () => {
       new bootstrap.Modal(document.getElementById("modalEditar")).show();
     }
 
-    // ELIMINAR
     if (btn.classList.contains("eliminar")) {
       Swal.fire({
         title: "¿Eliminar registro?",
@@ -288,7 +301,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ---------- GUARDAR CAMBIOS DESDE MODAL ----------
+  // ---------- GUARDAR CAMBIOS EDITAR ----------
   if (formEditar) {
     formEditar.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -303,23 +316,32 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      const seráGasto = registros[id].tipo === "Gasto";
-      if (seráGasto) {
+
+
+      const esGasto = registros[id].tipo === "Gasto";
+      if (esGasto) {
         const resultado = validaNoSuperaLimite(nuevaCategoria, nuevoMonto, id);
         if (!resultado.ok) {
           const d = resultado.detalle;
           Swal.fire({
             icon: "error",
-            title: "Límite excedido",
+            title: "Límite de presupuesto excedido",
             html: `
-              <strong>${resultado.categoria}</strong><br>
-              Límite: ${formatCurrency(d.limite)}<br>
-              Gastado actualmente: ${formatCurrency(d.gastosActuales)}<br>
-              Intentas dejar: ${formatCurrency(nuevoMonto)}<br>
-              Total resultante: ${formatCurrency(d.totalConNuevo)}<br><br>
-              <small>${d.restante > 0 ? `Te quedan ${formatCurrency(d.restante)}.` : "No queda presupuesto disponible."}</small>
-            `
+        <strong>${resultado.categoria}</strong><br>
+        Límite: ${formatCurrency(d.limite)}<br>
+        Total después de agregar: ${formatCurrency(d.totalConNuevo)}`,
+            showCancelButton: true,
+            confirmButtonText: "Ir a Presupuestos",
+            cancelButtonText: "Ok"
+          }).then((res) => {
+            if (res.isConfirmed) {
+              window.location.href = "presupuestos.html";
+            } else {
+              const modalEditar = bootstrap.Modal.getInstance(document.getElementById("modalEditar"));
+              if (modalEditar) modalEditar.hide();
+            }
           });
+
           return;
         }
       }
@@ -333,27 +355,84 @@ document.addEventListener("DOMContentLoaded", () => {
       mostrarHistorial();
       bootstrap.Modal.getInstance(document.getElementById("modalEditar")).hide();
 
-      Swal.fire({
-        icon: "success",
-        title: "¡Guardado!",
-        text: "Los cambios se han guardado correctamente.",
-        timer: 1200,
-        showConfirmButton: false,
-      });
+      Swal.fire({ icon: "success", title: "¡Guardado!", timer: 1200, showConfirmButton: false });
+    });
+  }
+
+  // ---------- GRÁFICO ----------
+  function actualizarGraficoIngresos() {
+    const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    const ingresosPorMes = Array(12).fill(0);
+
+    registros.forEach(r => {
+      if (r.tipo === "Ingreso" && r.fecha) {
+        const mes = parseInt(r.fecha.split("-")[1], 10) - 1;
+        if (mes >= 0 && mes < 12) ingresosPorMes[mes] += r.monto;
+      }
+    });
+
+    const data = {
+      labels: meses,
+      datasets: [{
+        label: "Ingresos mensuales",
+        data: ingresosPorMes,
+        borderColor: "#455a64",
+        // backgroundColor: "rgba(0, 123, 255, 0.1)",
+        fill: false,
+        tension: 0.3
+      }]
+    };
+
+    if (graficoIngresos) graficoIngresos.destroy();
+    graficoIngresos = new Chart(graficoCanvas, {
+      type: "line",
+      data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true },
+          tooltip: { mode: "index", intersect: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { callback: value => "$" + value }
+          }
+        }
+      }
     });
   }
 
   // ---------- FILTROS ----------
-  if (filtroTipo) {
-    filtroTipo.addEventListener("change", () => {
+  if (filtroTipo) filtroTipo.addEventListener("change", () => { actualizarCategorias(); mostrarHistorial(); });
+  if (filtroMes) filtroMes.addEventListener("change", mostrarHistorial);
+  if (filtroCategoria) filtroCategoria.addEventListener("change", mostrarHistorial);
+
+  actualizarCategorias();
+  mostrarHistorial();
+
+  const btnLimpiarForm = document.getElementById("btnLimpiarForm");
+  if (btnLimpiarForm) {
+    btnLimpiarForm.addEventListener("click", () => {
+      formRegistro.reset();
+      fechaRegistro.value = hoy;
+      periodoRegistro.value = "Mensual";
+      categoriaRegistro.innerHTML = `<option value="">Seleccionar Categoría</option>`;
+    });
+  }
+
+  const btnLimpiarFiltros = document.getElementById("btnLimpiarFiltros");
+  if (btnLimpiarFiltros) {
+    btnLimpiarFiltros.addEventListener("click", () => {
+      if (filtroTipo) filtroTipo.value = "todos";
+      if (filtroMes) filtroMes.value = "";
+      if (filtroCategoria) filtroCategoria.value = "todas";
       actualizarCategorias();
       mostrarHistorial();
     });
   }
-  if (filtroMes) filtroMes.addEventListener("change", mostrarHistorial);
-  if (filtroCategoria) filtroCategoria.addEventListener("change", mostrarHistorial);
 
-  // Inicializar
-  actualizarCategorias();
-  mostrarHistorial();
+
+
 });
