@@ -11,19 +11,20 @@ const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&l
 // Acceso a datos
 const getMetas = () => JSON.parse(localStorage.getItem(storageKey('metas')) || '[]');
 const saveMetas = m => localStorage.setItem(storageKey('metas'), JSON.stringify(m));
-const getRegistros = () => JSON.parse(localStorage.getItem(`registros_${currentUser.email}`) || '[]');
 
 // Cálculo de provisiones
 const calcularProvisiones = () => {
-    const registros = getRegistros();
-    const pattern = /provisi(?:o|ó)nes?|gasto\s*fijo|gasto_fijo/i;
-    const base = registros.reduce((acc, r) => 
-        r?.categoria && pattern.test(r.categoria) ? acc + Number(r.monto || 0) : acc, 0);
+    // Obtener el límite de Provisiones del presupuesto
+    const limitesKey = `limitesDePresupuesto_${currentUser.email}`;
+    const limitesPresupuesto = JSON.parse(localStorage.getItem(limitesKey) || '[]');
+    const limiteProvisiones = limitesPresupuesto.find(l => l.categoria === "Provisiones")?.limite || 0;
     
+    // Calcular los aportes ya realizados a metas
     const aportes = getMetas().reduce((acc, m) => 
         acc + (m.history?.reduce((sum, h) => h.action === 'aporte' ? sum + Number(h.amount || 0) : sum, 0) || 0), 0);
     
-    const total = Math.max(0, base - aportes);
+    // El saldo disponible es el límite menos los aportes ya realizados
+    const total = Math.max(0, limiteProvisiones - aportes);
     localStorage.setItem(storageKey('provisiones'), JSON.stringify({total, updatedAt: new Date().toISOString()}));
     return total;
 };
@@ -68,21 +69,10 @@ const crearMeta = (datos) => {
 
 const eliminarMeta = (id) => {
     let metas = getMetas();
-    const meta = metas.find(m => m.id === id);
-    
-    if (meta) {
-        const totalAportes = meta.history?.reduce((sum, h) => 
-            h.action === 'aporte' ? sum + Number(h.amount || 0) : sum, 0) || 0;
-        
-        if (totalAportes > 0) {
-            const provisiones = JSON.parse(localStorage.getItem(storageKey('provisiones')) || '{}');
-            provisiones.total = (Number(provisiones.total) || 0) + totalAportes;
-            provisiones.updatedAt = new Date().toISOString();
-            localStorage.setItem(storageKey('provisiones'), JSON.stringify(provisiones));
-        }
-    }
-    
     saveMetas(metas.filter(m => m.id !== id));
+    
+    // Recalcular provisiones
+    calcularProvisiones();
     renderMetas();
     renderHistorial();
     actualizarDisplayProvisiones();
@@ -113,6 +103,11 @@ const aportarMeta = (id, monto) => {
     const meta = metas.find(m => m.id === id);
     if (!meta) return false;
     
+    // No permitir aportes si la meta ya está completada
+    if (meta.actual >= meta.objetivo) {
+        return false;
+    }
+    
     const restante = Math.max(0, meta.objetivo - meta.actual);
     const montoReal = Math.min(Number(monto), restante);
     
@@ -132,21 +127,6 @@ const aportarMeta = (id, monto) => {
     return true;
 };
 
-const archivarMeta = (id) => {
-    const metas = getMetas();
-    const meta = metas.find(m => m.id === id);
-    if (!meta) return false;
-    
-    if (!meta.history) meta.history = [];
-    meta.history.push({action: 'archivada', amount: 0, date: new Date().toISOString()});
-    meta.archivada = true;
-    meta.fechaArchivado = new Date().toISOString();
-    
-    saveMetas(metas);
-    renderMetas();
-    renderHistorial();
-    return true;
-};
 
 // Renderizado
 const renderMetas = () => {
@@ -154,7 +134,7 @@ const renderMetas = () => {
     const empty = document.getElementById('listaMetasEmpty');
     if (!tbody) return;
     
-    const metas = getMetas().filter(m => !m.archivada);
+    const metas = getMetas();
     
     if (!metas.length) {
         tbody.innerHTML = '';
@@ -174,9 +154,8 @@ const renderMetas = () => {
             `<button class="btn btn-sm btn-outline-danger btn-eliminar" data-id="${m.id}"><i class="bi bi-trash"></i><span class="d-none d-sm-inline ms-1">Eliminar</span></button>`
         ];
         
-        if (completada) {
-            botones.push(`<button class="btn btn-sm btn-success btn-archivar" data-id="${m.id}"><i class="bi bi-archive"></i><span class="d-none d-sm-inline ms-1">Archivar</span></button>`);
-        } else {
+        // Solo mostrar botones de aportar si NO está completada
+        if (!completada) {
             if (m.contribucion === 'automatica' && aporte > 0) {
                 botones.push(`<button class="btn btn-sm btn-auto" data-id="${m.id}"><i class="bi bi-arrow-repeat"></i><span class="d-none d-sm-inline ms-1">Aportar ${numberWithCommas(aporte)}</span></button>`);
             } else {
@@ -184,19 +163,60 @@ const renderMetas = () => {
             }
         }
         
-        return `<tr>
-            <td>${escapeHtml(m.nombre)}</td>
+        // Indicador visual de completada
+        const nombreMeta = completada ? `${escapeHtml(m.nombre)} <span class="badge bg-success ms-2">Completada ✓</span>` : escapeHtml(m.nombre);
+        const barraColor = completada ? 'bg-success' : 'bg-success';
+        
+        return `<tr ${completada ? 'class="table-success"' : ''}>
+            <td>${nombreMeta}</td>
             <td>$${numberWithCommas(m.objetivo)}</td>
             <td>${m.tipo === 'tiempo' ? (m.periodos || '-') : '-'}</td>
             <td>${aporte > 0 ? '$' + numberWithCommas(aporte) : '-'}</td>
             <td>${m.nextContribution || '-'}</td>
             <td>$${numberWithCommas(m.actual)}</td>
-            <td><div class="progress" style="height:25px"><div class="progress-bar bg-success" style="width:${Math.min(porc,100)}%">${porc > 10 ? porc + '%' : ''}</div></div></td>
+            <td><div class="progress" style="height:25px"><div class="progress-bar ${barraColor}" style="width:${Math.min(porc,100)}%">${porc > 10 ? porc + '%' : ''}</div></div></td>
             <td class="tabla-acciones d-flex gap-2">${botones.join(' ')}</td>
         </tr>`;
     }).join('');
     
     vincularEventos();
+};
+
+// Función para capitalizar texto
+const capitalizar = (texto) => {
+    if (!texto) return '-';
+    return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
+};
+
+// Función para formatear tipo de meta
+const formatearTipo = (tipo) => {
+    const tipos = {
+        'tiempo': 'Por Tiempo',
+        'monto': 'Por Monto'
+    };
+    return tipos[tipo] || capitalizar(tipo);
+};
+
+// Función para formatear acción
+const formatearAccion = (accion) => {
+    const acciones = {
+        'creada': 'Creada',
+        'aporte': 'Aporte',
+        'editada': 'Editada',
+        'archivada': 'Archivada'
+    };
+    return acciones[accion] || capitalizar(accion);
+};
+
+// Función para obtener badge de acción
+const getBadgeAccion = (accion) => {
+    const badges = {
+        'creada': '<span class="badge bg-info text-white">Creada</span>',
+        'aporte': '<span class="badge bg-success text-white">Aporte</span>',
+        'editada': '<span class="badge bg-warning text-dark">Editada</span>',
+        'archivada': '<span class="badge bg-secondary text-white">Archivada</span>'
+    };
+    return badges[accion] || `<span class="badge bg-light text-dark">${formatearAccion(accion)}</span>`;
 };
 
 const renderHistorial = () => {
@@ -212,7 +232,7 @@ const renderHistorial = () => {
     if (select) {
         const actual = select.value;
         select.innerHTML = '<option value="">Todas las metas</option>' + 
-            metas.map(m => `<option value="${m.id}">${m.nombre}${m.archivada ? ' (Archivada)' : ''}</option>`).join('');
+            metas.map(m => `<option value="${m.id}">${m.nombre}${m.actual >= m.objetivo ? ' (Completada)' : ''}</option>`).join('');
         select.value = actual;
     }
     
@@ -223,16 +243,43 @@ const renderHistorial = () => {
             if (filtroMeta && m.id !== filtroMeta) return;
             if (filtroMes && h.date && !h.date.startsWith(filtroMes)) return;
             
-            filas.push(`<tr>
-                <td>${escapeHtml(m.nombre)}${m.archivada ? ' 📦' : ''}</td>
-                <td>${escapeHtml(m.tipo || '-')} / ${h.amount ? '$' + numberWithCommas(h.amount) : '-'}</td>
-                <td>${escapeHtml(h.action || '-')}</td>
-                <td>${h.date ? new Date(h.date).toLocaleString() : '-'}</td>
+            const estaCompletada = m.actual >= m.objetivo;
+            const nombreMeta = escapeHtml(m.nombre);
+            const tipoFormateado = formatearTipo(m.tipo || '-');
+            const montoFormateado = h.amount ? `$${numberWithCommas(h.amount)}` : '-';
+            const fechaFormateada = h.date ? new Date(h.date).toLocaleString('es-SV', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            }) : '-';
+            
+            filas.push(`<tr class="historial-row">
+                <td class="align-middle">
+                    <div class="d-flex align-items-center">
+                        <strong class="me-2">${nombreMeta}</strong>
+                        ${estaCompletada ? '<span class="badge bg-success ms-2"><i class="bi bi-check-circle"></i> Completada</span>' : ''}
+                    </div>
+                </td>
+                <td class="align-middle">
+                    <div>
+                        <span class="text-muted small">${tipoFormateado}</span>
+                        ${h.amount ? `<span class="badge bg-primary-subtle text-primary-emphasis ms-2">${montoFormateado}</span>` : `<span class="text-muted ms-2">-</span>`}
+                    </div>
+                </td>
+                <td class="align-middle">
+                    ${getBadgeAccion(h.action || '-')}
+                </td>
+                <td class="align-middle">
+                    <small class="text-muted">${fechaFormateada}</small>
+                </td>
             </tr>`);
         });
     });
     
-    tb.innerHTML = filas.length ? filas.join('') : '<tr><td colspan="4" class="text-center text-muted">No hay registros</td></tr>';
+    tb.innerHTML = filas.length ? filas.join('') : '<tr><td colspan="4" class="text-center text-muted py-4">No hay registros en el historial</td></tr>';
 };
 
 // Event handlers
@@ -333,12 +380,14 @@ document.addEventListener('DOMContentLoaded', () => {
         renderHistorial();
     });
     
-    // Polling registros
-    let lastReg = localStorage.getItem(`registros_${currentUser.email}`) || '';
+    // Polling límites de presupuesto
+    const limitesKey = `limitesDePresupuesto_${currentUser.email}`;
+    let lastLimites = localStorage.getItem(limitesKey) || '';
     setInterval(() => {
-        const current = localStorage.getItem(`registros_${currentUser.email}`) || '';
-        if (current !== lastReg) {
-            lastReg = current;
+        const currentLimites = localStorage.getItem(limitesKey) || '';
+        
+        if (currentLimites !== lastLimites) {
+            lastLimites = currentLimites;
             calcularProvisiones();
             actualizarDisplayProvisiones();
             renderMetas();
@@ -406,25 +455,4 @@ document.addEventListener('DOMContentLoaded', () => {
         bootstrap.Modal.getInstance(document.getElementById('modalEditarMeta')).hide();
     });
     
-    // Botón archivar
-    document.addEventListener('click', async (e) => {
-        const btn = e.target.closest('.btn-archivar');
-        if (!btn) return;
-        
-        const meta = getMetas().find(x => x.id === btn.dataset.id);
-        const res = await Swal.fire({
-            title: '¿Archivar meta?',
-            html: `<p>"<strong>${escapeHtml(meta.nombre)}</strong>"</p>
-                   <p class="text-muted">Provisiones ($${numberWithCommas(meta.actual)}) NO se devolverán.</p>`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#198754',
-            confirmButtonText: 'Sí, archivar'
-        });
-        
-        if (res.isConfirmed) {
-            archivarMeta(btn.dataset.id);
-            Swal.fire({icon: 'success', title: 'Archivada', timer: 2000, showConfirmButton: false});
-        }
-    });
 });

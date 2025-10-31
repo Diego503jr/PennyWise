@@ -72,6 +72,25 @@ document.addEventListener('DOMContentLoaded', function () {
       return acc;
     }, {});
 
+    // Sumar aportes de metas a la categoría "Provisiones"
+    const USER_KEY = (currentUser.username || currentUser.email || currentUser.id || 'guest').toString();
+    const metasKey = `metas_${USER_KEY}`;
+    const metas = JSON.parse(localStorage.getItem(metasKey) || '[]');
+    const totalAportesMetas = metas.reduce((total, m) => {
+      if (!m.history) return total;
+      return total + m.history.reduce((sum, h) => {
+        return h.action === 'aporte' ? sum + Number(h.amount || 0) : sum;
+      }, 0);
+    }, 0);
+    
+    // Agregar aportes de metas al gastado de Provisiones
+    if (totalAportesMetas > 0) {
+      if (!gastosSumadosPorCategoria["Provisiones"]) {
+        gastosSumadosPorCategoria["Provisiones"] = 0;
+      }
+      gastosSumadosPorCategoria["Provisiones"] += totalAportesMetas;
+    }
+
     renderizarMonitoreo(gastosSumadosPorCategoria);
   }
 
