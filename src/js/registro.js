@@ -1,13 +1,12 @@
-//Obtener usuario actual
+// Obtener usuario actual
 const currentUser = JSON.parse(localStorage.getItem("currentUser"));
 if (!currentUser) {
   window.location.href = "./index.html";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  //Referencias a los elementos
-  const formIngreso = document.getElementById("formIngreso");
-  const formGasto = document.getElementById("formGasto");
+  // Referencias a los elementos
+  const formRegistro = document.getElementById("formRegistro");
   const formEditar = document.getElementById("formEditar");
   const tablaHistorial = document.getElementById("tablaHistorial");
   const filtroTipo = document.getElementById("filtroTipo");
@@ -15,80 +14,78 @@ document.addEventListener("DOMContentLoaded", () => {
   const filtroCategoria = document.getElementById("filtroCategoria");
   const saldoTotal = document.getElementById("saldoTotal");
 
-  //Inicialización fecha y periodo
-  const hoy = new Date().toISOString().split("T")[0];
-  document.getElementById("fechaIngreso").value = hoy;
-  document.getElementById("fechaGasto").value = hoy;
+  // Inicialización fecha (ajustada a zona local)
+  const hoy = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+    .toISOString()
+    .split("T")[0];
 
-  fechaIngreso.value = hoy;
-  fechaIngreso.max = hoy;
+  const fechaRegistro = document.getElementById("fechaRegistro");
+  const periodoRegistro = document.getElementById("periodoRegistro");
 
-  fechaGasto.value = hoy;
-  fechaGasto.max = hoy;
+  if (fechaRegistro) {
+    fechaRegistro.value = hoy;
+    fechaRegistro.max = hoy;
+  }
+  if (periodoRegistro) periodoRegistro.value = "Mensual";
 
-  document.getElementById("periodoIngreso").value = "Mensual";
-  document.getElementById("periodoGasto").value = "Mensual";
+  const registrosKey = `registros_${currentUser.email}`;
+  const limitesKey = `limitesDePresupuesto_${currentUser.email}`;
 
-  //Recupera registros desde local
-  let registros =
-    JSON.parse(localStorage.getItem(`registros_${currentUser.email}`)) || [];
+  // Recupera registros desde localStorage
+  let registros = JSON.parse(localStorage.getItem(registrosKey)) || [];
 
-  //Guarda en local
+  // Guardar en localStorage
   const guardarLocal = () =>
-    localStorage.setItem(
-      `registros_${currentUser.email}`,
-      JSON.stringify(registros)
-    );
+    localStorage.setItem(registrosKey, JSON.stringify(registros));
 
-  //Recorre los registros y calcula el saldo total
+  // Formateo y utilidades
+  const formatCurrency = (n) =>
+    n.toLocaleString("es-SV", { style: "currency", currency: "USD" });
+
   const calcularSaldo = () => {
     const total = registros.reduce(
       (acc, r) => (r.tipo === "Ingreso" ? acc + r.monto : acc - r.monto),
       0
     );
-
-    saldoTotal.textContent = `$${total.toFixed(2)}`;
-
-    // Cambiar color según saldo
-    if (total > 0) {
-      saldoTotal.classList.add("text-success");
-      saldoTotal.classList.remove("text-danger");
-    } else if (total < 0) {
-      saldoTotal.classList.add("text-danger");
-      saldoTotal.classList.remove("text-success");
-    } else {
-      // saldo = 0
-      saldoTotal.classList.remove("text-success", "text-danger");
+    if (saldoTotal) {
+      saldoTotal.textContent = formatCurrency(total);
+      if (total > 0) {
+        saldoTotal.classList.add("text-success");
+        saldoTotal.classList.remove("text-danger");
+      } else if (total < 0) {
+        saldoTotal.classList.add("text-danger");
+        saldoTotal.classList.remove("text-success");
+      } else {
+        saldoTotal.classList.remove("text-success", "text-danger");
+      }
     }
   };
 
-  //Formato fecha DD/MM/AAAA
   const formatearFecha = (fechaISO) => {
+    if (!fechaISO) return "";
     const [anio, mes, dia] = fechaISO.split("-");
     return `${dia}/${mes}/${anio}`;
   };
 
+  // Mostrar historial en la tabla
   const mostrarHistorial = () => {
-    const tipo = filtroTipo.value;
-    const mes = filtroMes.value;
-    const cat = filtroCategoria.value;
+    const tipo = filtroTipo ? filtroTipo.value : "todos";
+    const mes = filtroMes ? filtroMes.value : "";
+    const cat = filtroCategoria ? filtroCategoria.value : "todas";
+
+    if (!tablaHistorial) return;
     tablaHistorial.innerHTML = "";
 
-    //Filtra registros
-    let filtrados = registros;
+    let filtrados = registros.slice();
     if (tipo !== "todos") filtrados = filtrados.filter((r) => r.tipo === tipo);
     if (mes) filtrados = filtrados.filter((r) => r.fecha.startsWith(mes));
-    if (cat !== "todas")
-      filtrados = filtrados.filter((r) => r.categoria === cat);
+    if (cat !== "todas") filtrados = filtrados.filter((r) => r.categoria === cat);
 
-    //Agrega filas a la tabla según registros filtrados
-    //Muestra botones de acciones
     filtrados.forEach((r, i) => {
       const fila = document.createElement("tr");
       fila.innerHTML = `
-        <td class="${r.tipo === "Ingreso" ? "text-success fw-bold" : "text-danger fw-bold"
-        }">${r.tipo}</td>
-        <td>$${r.monto}</td>
+        <td class="${r.tipo === "Ingreso" ? "text-success fw-bold" : "text-danger fw-bold"}">${r.tipo}</td>
+        <td>${formatCurrency(r.monto)}</td>
         <td>${r.categoria || r.descripcion}</td>
         <td>${formatearFecha(r.fecha)}</td>
         <td>
@@ -106,20 +103,14 @@ document.addEventListener("DOMContentLoaded", () => {
     calcularSaldo();
   };
 
-  //Inserta registros, guarda en local y actualiza tabla 
-  const agregarRegistro = (registro) => {
-    registros.push(registro);
-    guardarLocal();
-    mostrarHistorial();
-  };
-
   // Categorías por tipo
   const categoriasIngreso = ["Salario", "Comisiones", "Venta", "Pago", "Otro"];
   const categoriasGasto = ["Ahorro", "Provisiones", "Gastos Fijos", "Gastos Variables", "Deudas"];
 
-  //Muestra filtro categoría según tipo
+  // Actualizar filtro de categorías
   const actualizarCategorias = () => {
-    const tipo = filtroTipo.value;
+    if (!filtroCategoria) return;
+    const tipo = filtroTipo ? filtroTipo.value : "";
     filtroCategoria.innerHTML = "";
 
     if (tipo === "Ingreso") {
@@ -134,84 +125,148 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Registrar Ingreso
-  formIngreso.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const ingreso = {
-      tipo: "Ingreso",
-      monto: parseFloat(document.getElementById("montoIngreso").value),
-      periodo: "Mensual",
-      categoria: document.getElementById("categoriaIngreso").value,
-      descripcion: document.getElementById("descripcionIngreso").value,
-      fecha: document.getElementById("fechaIngreso").value,
-    };
-    agregarRegistro(ingreso);
-    formIngreso.reset();
-    document.getElementById("fechaIngreso").value = hoy;
-    document.getElementById("periodoIngreso").value = "Mensual";
-  });
+  // FORMULARIO UNIFICADO
+  const tipoRegistro = document.getElementById("tipoRegistro");
+  const categoriaRegistro = document.getElementById("categoriaRegistro");
 
-  // Registrar Gasto
-  formGasto.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const Gasto = {
-      tipo: "Gasto",
-      monto: parseFloat(document.getElementById("montoGasto").value),
-      periodo: "Mensual",
-      categoria: document.getElementById("categoriaGasto").value,
-      descripcion: document.getElementById("descripcionGasto").value,
-      fecha: document.getElementById("fechaGasto").value,
-    };
-    agregarRegistro(Gasto);
-    formGasto.reset();
-    document.getElementById("fechaGasto").value = hoy;
-    document.getElementById("periodoGasto").value = "Mensual";
-  });
+  if (tipoRegistro && categoriaRegistro) {
+    tipoRegistro.addEventListener("change", () => {
+      categoriaRegistro.innerHTML = `<option value="">Seleccionar Categoría</option>`;
+      const tipo = tipoRegistro.value;
+      const categorias = tipo === "Ingreso" ? categoriasIngreso : tipo === "Gasto" ? categoriasGasto : [];
+      categorias.forEach((c) => {
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = c;
+        categoriaRegistro.appendChild(opt);
+      });
+    });
+  }
 
-  // Editar y Eliminar
+  // ---------- VALIDACIÓN DE LÍMITES ----------
+  function leerLimites() {
+    const raw = localStorage.getItem(limitesKey);
+    try {
+      const parsed = raw ? JSON.parse(raw) : [];
+      return (parsed || []).map(p => {
+        if (!p || typeof p !== "object") return null;
+        return {
+          categoria: (p.categoria ?? p.cat ?? "").toString().trim(),
+          limite: Number(p.limite ?? p.monto ?? 0)
+        };
+      }).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function obtenerLimiteParaCategoria(categoria) {
+    const limites = leerLimites();
+    const buscada = categoria.toLowerCase().trim();
+    return limites.find(l => l.categoria.toLowerCase().trim() === buscada);
+  }
+
+  function validaNoSuperaLimite(categoria, montoNuevo, idEditar = null) {
+    const limiteObj = obtenerLimiteParaCategoria(categoria);
+    if (!limiteObj) return { ok: true }; // sin límite definido
+
+    const gastosActuales = registros
+      .filter((r, i) => r.tipo === "Gasto" && r.categoria?.toLowerCase().trim() === categoria.toLowerCase().trim() && i !== idEditar)
+      .reduce((acc, r) => acc + Number(r.monto || 0), 0);
+
+    const totalConNuevo = gastosActuales + Number(montoNuevo || 0);
+    const limite = Number(limiteObj.limite || 0);
+
+    if (totalConNuevo > limite) {
+      return {
+        ok: false,
+        detalle: { limite, gastosActuales, totalConNuevo, restante: limite - gastosActuales },
+        categoria: limiteObj.categoria
+      };
+    }
+    return { ok: true };
+  }
+
+  // ---------- AGREGAR REGISTRO ----------
+  if (formRegistro) {
+    formRegistro.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const tipo = tipoRegistro?.value || "";
+      const monto = parseFloat(document.getElementById("montoRegistro")?.value || "NaN");
+      const categoria = categoriaRegistro?.value || "";
+      const descripcion = document.getElementById("descripcionRegistro")?.value || "";
+      const fecha = fechaRegistro?.value || hoy;
+
+      if (!tipo || !categoria || isNaN(monto) || monto <= 0 || !fecha) {
+        Swal.fire("Error", "Completa todos los campos correctamente.", "error");
+        return;
+      }
+
+      if (tipo === "Gasto") {
+        const resultado = validaNoSuperaLimite(categoria, monto);
+        if (!resultado.ok) {
+          const d = resultado.detalle;
+          Swal.fire({
+            icon: "error",
+            title: "Límite excedido",
+            html: `
+              <strong>${resultado.categoria}</strong><br>
+              Límite: ${formatCurrency(d.limite)}<br>
+              Gastado actualmente: ${formatCurrency(d.gastosActuales)}<br>
+              Intentas agregar: ${formatCurrency(monto)}<br>
+              Total resultante: ${formatCurrency(d.totalConNuevo)}<br><br>
+              <small>${d.restante > 0 ? `Te quedan ${formatCurrency(d.restante)}.` : "No queda presupuesto disponible."}</small>
+            `
+          });
+          return;
+        }
+      }
+
+      registros.push({ tipo, monto, periodo: "Mensual", categoria, descripcion, fecha });
+      guardarLocal();
+      mostrarHistorial();
+
+      formRegistro.reset();
+      fechaRegistro.value = hoy;
+      periodoRegistro.value = "Mensual";
+      categoriaRegistro.innerHTML = `<option value="">Seleccionar Categoría</option>`;
+
+      Swal.fire({ icon: "success", title: "Guardado correctamente", showConfirmButton: false, timer: 1200 });
+    });
+  }
+
+  // ---------- EDITAR / ELIMINAR ----------
   tablaHistorial.addEventListener("click", (e) => {
     const btn = e.target.closest("button");
     if (!btn) return;
-    const id = btn.dataset.id;
+    const id = Number(btn.dataset.id);
     const r = registros[id];
 
-    // Editar
+    // EDITAR
     if (btn.classList.contains("editar")) {
       document.getElementById("editarId").value = id;
       document.getElementById("editarMonto").value = r.monto;
-      document.getElementById("editarPeriodo").value = r.periodo;
+      document.getElementById("editarPeriodo").value = r.periodo || "Mensual";
       document.getElementById("editarDescripcion").value = r.descripcion || "";
-      document.getElementById("editarFecha").value = r.fecha;
+      document.getElementById("editarFecha").value = r.fecha || hoy;
 
       const selectCategoria = document.getElementById("editarCategoria");
-
       selectCategoria.innerHTML = "";
 
-      //Muestra categorías según tipo de registro
-      if (r.tipo === "Ingreso") {
-        selectCategoria.innerHTML = `
-      <option value="">Seleccionar Categoría</option>
-      <option value="Salario">Salario</option>
-      <option value="Comisiones">Comisiones</option>
-      <option value="Venta">Venta</option>
-      <option value="Pago">Pago</option>
-      <option value="Otro">Otro</option>`;
-      } else if (r.tipo === "Gasto") {
-        selectCategoria.innerHTML = `
-      <option value="">Seleccionar Categoría</option>
-      <option value="Ahorro">Ahorro</option>
-      <option value="Provisiones">Provisiones</option>
-      <option value="Gastos Fijos">Gastos Fijos</option>
-      <option value="Gastos Variables">Gastos Variables</option>
-      <option value="Deudas">Deudas</option>`;
-      }
+      const categorias = r.tipo === "Ingreso" ? categoriasIngreso : categoriasGasto;
+      categorias.forEach((c) => {
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = c;
+        selectCategoria.appendChild(opt);
+      });
 
       selectCategoria.value = r.categoria || "";
-
       new bootstrap.Modal(document.getElementById("modalEditar")).show();
     }
 
-    // Eliminar
+    // ELIMINAR
     if (btn.classList.contains("eliminar")) {
       Swal.fire({
         title: "¿Eliminar registro?",
@@ -233,39 +288,72 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Guardar cambios desde modal
-  formEditar.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const id = document.getElementById("editarId").value;
-    registros[id].monto = parseFloat(
-      document.getElementById("editarMonto").value
-    );
-    registros[id].descripcion =
-      document.getElementById("editarDescripcion").value;
-    registros[id].categoria = document.getElementById("editarCategoria").value;
-    registros[id].fecha = document.getElementById("editarFecha").value;
-    guardarLocal();
-    mostrarHistorial();
-    bootstrap.Modal.getInstance(document.getElementById("modalEditar")).hide();
+  // ---------- GUARDAR CAMBIOS DESDE MODAL ----------
+  if (formEditar) {
+    formEditar.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const id = parseInt(document.getElementById("editarId").value, 10);
+      const nuevoMonto = parseFloat(document.getElementById("editarMonto").value);
+      const nuevaCategoria = document.getElementById("editarCategoria").value;
+      const nuevaDescripcion = document.getElementById("editarDescripcion").value;
+      const nuevaFecha = document.getElementById("editarFecha").value;
 
-    Swal.fire({
-      icon: "success",
-      title: "¡Guardado!",
-      text: "Los cambios se han guardado correctamente.",
-      timer: 1500,
-      showConfirmButton: false,
+      if (isNaN(nuevoMonto) || nuevoMonto <= 0 || !nuevaCategoria || !nuevaFecha) {
+        Swal.fire("Error", "Completa todos los campos correctamente.", "error");
+        return;
+      }
+
+      const seráGasto = registros[id].tipo === "Gasto";
+      if (seráGasto) {
+        const resultado = validaNoSuperaLimite(nuevaCategoria, nuevoMonto, id);
+        if (!resultado.ok) {
+          const d = resultado.detalle;
+          Swal.fire({
+            icon: "error",
+            title: "Límite excedido",
+            html: `
+              <strong>${resultado.categoria}</strong><br>
+              Límite: ${formatCurrency(d.limite)}<br>
+              Gastado actualmente: ${formatCurrency(d.gastosActuales)}<br>
+              Intentas dejar: ${formatCurrency(nuevoMonto)}<br>
+              Total resultante: ${formatCurrency(d.totalConNuevo)}<br><br>
+              <small>${d.restante > 0 ? `Te quedan ${formatCurrency(d.restante)}.` : "No queda presupuesto disponible."}</small>
+            `
+          });
+          return;
+        }
+      }
+
+      registros[id].monto = nuevoMonto;
+      registros[id].descripcion = nuevaDescripcion;
+      registros[id].categoria = nuevaCategoria;
+      registros[id].fecha = nuevaFecha;
+
+      guardarLocal();
+      mostrarHistorial();
+      bootstrap.Modal.getInstance(document.getElementById("modalEditar")).hide();
+
+      Swal.fire({
+        icon: "success",
+        title: "¡Guardado!",
+        text: "Los cambios se han guardado correctamente.",
+        timer: 1200,
+        showConfirmButton: false,
+      });
     });
-  });
+  }
 
-  // Actualizar categorías y mostrar historial al cambiar filtros
-  filtroTipo.addEventListener("change", () => {
-    actualizarCategorias();
-    mostrarHistorial();
-  });
-  filtroMes.addEventListener("change", mostrarHistorial);
-  filtroCategoria.addEventListener("change", mostrarHistorial);
+  // ---------- FILTROS ----------
+  if (filtroTipo) {
+    filtroTipo.addEventListener("change", () => {
+      actualizarCategorias();
+      mostrarHistorial();
+    });
+  }
+  if (filtroMes) filtroMes.addEventListener("change", mostrarHistorial);
+  if (filtroCategoria) filtroCategoria.addEventListener("change", mostrarHistorial);
 
-  // Inicializar categorías y mostrar historial
+  // Inicializar
   actualizarCategorias();
   mostrarHistorial();
 });
