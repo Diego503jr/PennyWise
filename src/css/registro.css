@@ -127,3 +127,7 @@ section.card.mi-tarjeta input[type="month"] {
 input[type="month"] {
     cursor: pointer;
 }
+#formularioPrincipal {
+  width: 50%;
+  float: left;
+}

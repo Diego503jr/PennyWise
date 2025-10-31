@@ -105,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Categorías por tipo
   const categoriasIngreso = ["Salario", "Comisiones", "Venta", "Pago", "Otro"];
-  const categoriasGasto = ["Ahorro", "Provisiones", "Gastos Fijos", "Gastos Variables", "Deudas"];
+  const categoriasGasto = ["Ahorro", "Gastos Fijos", "Gastos Variables", "Deudas"];
 
   // Actualizar filtro de categorías
   const actualizarCategorias = () => {
