@@ -7,8 +7,8 @@ function setupPasswordToggle(inputId, toggleButtonId, iconId) {
     if (toggleButton && input && eyeIcon) {
         toggleButton.addEventListener('click', function (e) {
             // Evita que el botón envíe el formulario si está dentro del <form>
-            e.preventDefault(); 
-            
+            e.preventDefault();
+
             // Alternar el tipo (password/text)
             const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
             input.setAttribute('type', type);
@@ -47,7 +47,7 @@ function passMatch(pass, confPass) {
 }
 
 // Registro con asincronismo
-document.getElementById("registerForm").addEventListener("submit", async function(e) {
+document.getElementById("registerForm").addEventListener("submit", async function (e) {
     e.preventDefault();
 
     const name = document.getElementById("name").value.trim();
@@ -105,7 +105,7 @@ document.getElementById("registerForm").addEventListener("submit", async functio
         });
 
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
+
         // 3. Lógica de LocalStorage (simulación de respuesta exitosa del servidor)
         let users = JSON.parse(localStorage.getItem('users')) || [];
 
@@ -123,6 +123,19 @@ document.getElementById("registerForm").addEventListener("submit", async functio
         // Agregar usuario
         users.push({ name, email, password });
         localStorage.setItem('users', JSON.stringify(users));
+
+        const VALORES_DEFECTO_LIMITES = [
+            { categoria: "Ahorro", limite: 100 },
+            { categoria: "Provisiones", limite: 400 },
+            { categoria: "Gastos Fijos", limite: 500 },
+            { categoria: "Gastos Variables", limite: 150 },
+            { categoria: "Deudas", limite: 100 }
+        ];
+
+        // 2. Crea la clave específica para el *nuevo* usuario
+        const limitesKey = `limitesDePresupuesto_${email}`;
+
+        localStorage.setItem(limitesKey, JSON.stringify(VALORES_DEFECTO_LIMITES));
 
         // 4. Notificación de Éxito y Redirección
         Swal.fire({

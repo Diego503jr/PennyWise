@@ -22,7 +22,8 @@ document.addEventListener('DOMContentLoaded', function () {
     { categoria: "Gastos Variables", limite: 150 },
     { categoria: "Deudas", limite: 100 }
   ];
-  let limitesPresupuesto = JSON.parse(localStorage.getItem(limitesKey)) || VALORES_DEFECTO_LIMITES;
+
+  let limitesPresupuesto = JSON.parse(localStorage.getItem(limitesKey)) || [];
 
   const balanceTotalSpan = document.getElementById('balanceTotalSpan');
   const balanceHeader = document.getElementById('balanceHeader');
