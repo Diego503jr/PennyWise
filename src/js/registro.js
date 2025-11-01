@@ -40,6 +40,30 @@ document.addEventListener("DOMContentLoaded", () => {
   const registrosKey = `registros_${currentUser.email}`;
   const limitesKey = `limitesDePresupuesto_${currentUser.email}`;
 
+  // Mostrar alerta si no hay límites establecidos
+  const limites = JSON.parse(localStorage.getItem(limitesKey)) || [];
+  const sinLimites = !limites.length || limites.every(l => !l.limite || l.limite === 0);
+
+  if (sinLimites) {
+    const contenedor = document.querySelector("main") || document.body;
+    const aviso = document.createElement("div");
+
+    aviso.className = "alert alert-warning text-center mt-3 mx-3 rounded-3 shadow-sm";
+    aviso.innerHTML = `
+    <strong>¿Aún no has agregado límites de presupuesto?</strong><br>
+    <button id="btnIrPresupuestos" class="btn btn-warning mt-2 fw-bold">
+      Agregarlos ahora
+    </button>
+  `;
+
+    contenedor.prepend(aviso);
+
+    document.getElementById("btnIrPresupuestos").addEventListener("click", () => {
+      window.location.href = "presupuestos.html";
+    });
+  }
+
+
   // Recupera registros desde localStorage
   let registros = JSON.parse(localStorage.getItem(registrosKey)) || [];
 
@@ -51,16 +75,29 @@ document.addEventListener("DOMContentLoaded", () => {
     n.toLocaleString("es-SV", { style: "currency", currency: "USD" });
 
   const calcularSaldo = () => {
-    const total = registros.reduce(
+    // Suma total de ingresos y gastos
+    let total = registros.reduce(
       (acc, r) => (r.tipo === "Ingreso" ? acc + r.monto : acc - r.monto),
       0
     );
+
+    // Leer límites actuales
+    const limites = JSON.parse(localStorage.getItem(limitesKey)) || [];
+    const limiteProvisiones = limites.find(l => l.categoria === "Provisiones")?.limite || 0;
+
+    // Restar provisiones al saldo
+    total -= limiteProvisiones;
+
+    // Actualizar visualmente
     if (saldoTotal) {
       saldoTotal.textContent = formatCurrency(total);
       saldoTotal.classList.toggle("text-success", total > 0);
       saldoTotal.classList.toggle("text-danger", total < 0);
     }
+
+    return total;
   };
+
 
   const formatearFecha = (fechaISO) => {
     if (!fechaISO) return "";
@@ -188,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const totalConNuevo = gastosActuales + Number(montoNuevo || 0);
     const limite = Number(limiteObj.limite || 0);
 
-    if (totalConNuevo > limite) {
+    if (limite > 0 && totalConNuevo > limite) {
       return {
         ok: false,
         detalle: { limite, gastosActuales, totalConNuevo, restante: limite - gastosActuales },
@@ -214,7 +251,17 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+
       if (tipo === "Gasto") {
+        const saldoActual = calcularSaldo();
+        if (monto > saldoActual) {
+          Swal.fire({
+            icon: "error",
+            title: "Saldo insuficiente",
+            text: `El gasto supera el saldo actual de ${formatCurrency(saldoActual)}`,
+          });
+          return;
+        }
         const resultado = validaNoSuperaLimite(categoria, monto);
         if (!resultado.ok) {
           const d = resultado.detalle;
@@ -248,7 +295,7 @@ document.addEventListener("DOMContentLoaded", () => {
       periodoRegistro.value = "Mensual";
       categoriaRegistro.innerHTML = `<option value="">Seleccionar Categoría</option>`;
 
-      Swal.fire({ icon: "success", title: "Guardado correctamente", showConfirmButton: false, timer: 1200 });
+      Swal.fire({ icon: "success", title: "Gasto registrado correctamente", showConfirmButton: false, timer: 2000 });
     });
   }
 
@@ -355,7 +402,7 @@ document.addEventListener("DOMContentLoaded", () => {
       mostrarHistorial();
       bootstrap.Modal.getInstance(document.getElementById("modalEditar")).hide();
 
-      Swal.fire({ icon: "success", title: "¡Guardado!", timer: 1200, showConfirmButton: false });
+      Swal.fire({ icon: "success", title: "¡Movimiento actualizado correctamente!", timer: 1200, showConfirmButton: false });
     });
   }
 
