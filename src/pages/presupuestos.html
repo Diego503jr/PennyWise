@@ -14,7 +14,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <style>
-   
+
   </style>
 </head>
 
@@ -77,12 +77,12 @@
             <p class="text-muted">
               Define cuánto planeas gastar mensualmente en cada categoría.
             </p>
-            
+
             <div class="mb-3">
               <label for="limiteAhorro" class="form-label">Ahorro</label>
               <div class="input-group">
                 <span class="input-group-text">$</span>
-                <input type="number" class="form-control" id="limiteAhorro" value="100">
+                <input type="number" class="form-control" id="limiteAhorro" value="0">
               </div>
             </div>
 
@@ -90,7 +90,7 @@
               <label for="limiteProvisiones" class="form-label">Provisiones (Comida)</label>
               <div class="input-group">
                 <span class="input-group-text">$</span>
-                <input type="number" class="form-control" id="limiteProvisiones" value="400">
+                <input type="number" class="form-control" id="limiteProvisiones" value="0">
               </div>
             </div>
 
@@ -98,7 +98,7 @@
               <label for="limiteGastosFijos" class="form-label">Gastos Fijos (Renta, etc.)</label>
               <div class="input-group">
                 <span class="input-group-text">$</span>
-                <input type="number" class="form-control" id="limiteGastosFijos" value="500">
+                <input type="number" class="form-control" id="limiteGastosFijos" value="0">
               </div>
             </div>
 
@@ -106,7 +106,7 @@
               <label for="limiteGastosVariables" class="form-label">Gastos Variables (Ocio, etc.)</label>
               <div class="input-group">
                 <span class="input-group-text">$</span>
-                <input type="number" class="form-control" id="limiteGastosVariables" value="150">
+                <input type="number" class="form-control" id="limiteGastosVariables" value="0">
               </div>
             </div>
 
@@ -114,7 +114,7 @@
               <label for="limiteDeudas" class="form-label">Deudas</label>
               <div class="input-group">
                 <span class="input-group-text">$</span>
-                <input type="number" class="form-control" id="limiteDeudas" value="100">
+                <input type="number" class="form-control" id="limiteDeudas" value="0">
               </div>
             </div>
           </form>
@@ -132,6 +132,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="../js/presupuesto.js"></script>
   <div id="footer"></div>
   <script src="../js/addFooterNav.js"></script>

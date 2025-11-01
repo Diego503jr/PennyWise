@@ -16,18 +16,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
   const VALORES_DEFECTO_LIMITES = [
-    { categoria: "Ahorro", limite: 100 },
-    { categoria: "Provisiones", limite: 400 },
-    { categoria: "Gastos Fijos", limite: 500 },
-    { categoria: "Gastos Variables", limite: 150 },
-    { categoria: "Deudas", limite: 100 }
+    { categoria: "Ahorro", limite: 0 },
+    { categoria: "Provisiones", limite: 0 },
+    { categoria: "Gastos Fijos", limite: 0 },
+    { categoria: "Gastos Variables", limite: 0 },
+    { categoria: "Deudas", limite: 0 }
   ];
 
   let limitesPresupuesto = JSON.parse(localStorage.getItem(limitesKey)) || [];
 
   const balanceTotalSpan = document.getElementById('balanceTotalSpan');
   const balanceHeader = document.getElementById('balanceHeader');
-  
+
   const gastosAccordionContainer = document.getElementById('gastosAccordionContainer');
   const totalGastosRealesSpan = document.getElementById('totalGastosRealesSpan');
 
@@ -47,10 +47,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function actualizarDashboard() {
     const totalIngresos = ingresosFijos.reduce((sum, item) => sum + item.monto, 0);
-    
+
     const totalGastosReales = todosLosGastos.reduce((sum, item) => sum + item.monto, 0);
 
-    const balance = totalIngresos - totalGastosReales;
+    const limiteProvisiones = limitesPresupuesto.find(l => l.categoria === "Provisiones")?.limite || 0;
+    const balance = totalIngresos - totalGastosReales - limiteProvisiones;
     if (balanceTotalSpan) {
       balanceTotalSpan.textContent = formatCurrency(balance);
       if (balance >= 0) {
@@ -62,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    
+
     renderizarAcordeonGastos(todosLosGastos, totalGastosReales);
 
     const gastosSumadosPorCategoria = todosLosGastos.reduce((acc, trans) => {
@@ -83,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return h.action === 'aporte' ? sum + Number(h.amount || 0) : sum;
       }, 0);
     }, 0);
-    
+
     // Agregar aportes de metas al gastado de Provisiones
     if (totalAportesMetas > 0) {
       if (!gastosSumadosPorCategoria["Provisiones"]) {
@@ -100,18 +101,18 @@ document.addEventListener('DOMContentLoaded', function () {
     totalGastosRealesSpan.textContent = formatCurrency(total);
 
     const gastosAgrupados = gastos.reduce((acc, gasto) => {
-        const cat = gasto.categoria || 'Sin Categoría';
-        if (!acc[cat]) {
-            acc[cat] = { total: 0, items: [] };
-        }
-        acc[cat].total += gasto.monto;
-        acc[cat].items.push(gasto);
-        return acc;
+      const cat = gasto.categoria || 'Sin Categoría';
+      if (!acc[cat]) {
+        acc[cat] = { total: 0, items: [] };
+      }
+      acc[cat].total += gasto.monto;
+      acc[cat].items.push(gasto);
+      return acc;
     }, {});
 
     if (Object.keys(gastosAgrupados).length === 0) {
-        gastosAccordionContainer.innerHTML = '<div class="card-body text-muted">Aún no hay gastos registrados.</div>';
-        return;
+      gastosAccordionContainer.innerHTML = '<div class="card-body text-muted">Aún no hay gastos registrados.</div>';
+      return;
     }
 
     let accordionHTML = '<div class="accordion accordion-flush" id="accordionGastos">';
@@ -119,10 +120,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const categoriasOrdenadas = Object.keys(gastosAgrupados).sort();
 
     categoriasOrdenadas.forEach((categoria, index) => {
-        const grupo = gastosAgrupados[categoria];
-        const collapseId = `collapse-${index}`;
-        
-        const itemsHTML = grupo.items.map(gasto => `
+      const grupo = gastosAgrupados[categoria];
+      const collapseId = `collapse-${index}`;
+
+      const itemsHTML = grupo.items.map(gasto => `
             <li class="list-group-item d-flex justify-content-between align-items-center">
                 <div>
                     <strong>${gasto.descripcion}</strong>
@@ -132,8 +133,8 @@ document.addEventListener('DOMContentLoaded', function () {
             </li>
         `).join('');
 
-    
-        accordionHTML += `
+
+      accordionHTML += `
             <div class="accordion-item">
                 <h2 class="accordion-header" id="heading-${index}">
                     <button class="accordion-button accordion-button-custom collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}">
@@ -160,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function () {
     accordionHTML += '</div>';
 
     gastosAccordionContainer.innerHTML = accordionHTML;
-}
+  }
 
   function renderizarMonitoreo(gastosSumadosPorCategoria) {
     listaMonitoreoUI.innerHTML = '';
@@ -177,9 +178,9 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       const div = document.createElement('div');
       div.className = 'mb-4';
-      
+
       let tituloCategoria = `<strong>${categoria}</strong>`;
-      
+
       if (categoria === "Provisiones") {
         tituloCategoria = `
             <a href="./metas.html" class="monitoreo-link">
@@ -208,17 +209,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
   modalLimites.addEventListener('show.bs.modal', function () {
     document.getElementById('limiteAhorro').value =
-      limitesPresupuesto.find(l => l.categoria === "Ahorro")?.limite || 100;
+      limitesPresupuesto.find(l => l.categoria === "Ahorro")?.limite || 0;
     document.getElementById('limiteProvisiones').value =
-      limitesPresupuesto.find(l => l.categoria === "Provisiones")?.limite || 400;
+      limitesPresupuesto.find(l => l.categoria === "Provisiones")?.limite || 0;
     document.getElementById('limiteGastosFijos').value =
-      limitesPresupuesto.find(l => l.categoria === "Gastos Fijos")?.limite || 500;
+      limitesPresupuesto.find(l => l.categoria === "Gastos Fijos")?.limite || 0;
     document.getElementById('limiteGastosVariables').value =
-      limitesPresupuesto.find(l => l.categoria === "Gastos Variables")?.limite || 150;
+      limitesPresupuesto.find(l => l.categoria === "Gastos Variables")?.limite || 0;
     document.getElementById('limiteDeudas').value =
-      limitesPresupuesto.find(l => l.categoria === "Deudas")?.limite || 100;
+      limitesPresupuesto.find(l => l.categoria === "Deudas")?.limite || 0;
   });
-
   formLimites.addEventListener('submit', function (e) {
     e.preventDefault();
     const nuevoLimiteAhorro = parseFloat(document.getElementById('limiteAhorro').value);
@@ -226,6 +226,22 @@ document.addEventListener('DOMContentLoaded', function () {
     const nuevoLimiteGastosFijos = parseFloat(document.getElementById('limiteGastosFijos').value);
     const nuevoLimiteGastosVariables = parseFloat(document.getElementById('limiteGastosVariables').value);
     const nuevoLimiteDeudas = parseFloat(document.getElementById('limiteDeudas').value);
+
+
+    const totalIngresos = ingresosFijos.reduce((sum, item) => sum + item.monto, 0);
+    const totalGastosReales = todosLosGastos.reduce((sum, item) => sum + item.monto, 0);
+    const saldoActual = totalIngresos - totalGastosReales;
+
+    // Validación de provisiones
+    if (nuevoLimiteProvisiones > saldoActual) {
+      Swal.fire({
+        icon: "error",
+        title: "Límite inválido",
+        text: `El límite de provisiones no puede ser mayor al saldo actual (${formatCurrency(saldoActual)}).`,
+      });
+      return;
+    }
+
     limitesPresupuesto = [
       { categoria: "Ahorro", limite: nuevoLimiteAhorro },
       { categoria: "Provisiones", limite: nuevoLimiteProvisiones },
@@ -235,6 +251,7 @@ document.addEventListener('DOMContentLoaded', function () {
     ];
     localStorage.setItem(limitesKey, JSON.stringify(limitesPresupuesto));
     console.log(`Nuevos límites guardados en ${limitesKey}:`, limitesPresupuesto);
+
     actualizarDashboard();
     const modal = bootstrap.Modal.getInstance(modalLimites);
     modal.hide();
