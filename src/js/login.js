@@ -125,11 +125,11 @@ document.getElementById("registerForm").addEventListener("submit", async functio
         localStorage.setItem('users', JSON.stringify(users));
 
         const VALORES_DEFECTO_LIMITES = [
-            { categoria: "Ahorro", limite: 100 },
-            { categoria: "Provisiones", limite: 400 },
-            { categoria: "Gastos Fijos", limite: 500 },
-            { categoria: "Gastos Variables", limite: 150 },
-            { categoria: "Deudas", limite: 100 }
+            { categoria: "Ahorro", limite: 0 },
+            { categoria: "Provisiones", limite: 0 },
+            { categoria: "Gastos Fijos", limite: 0 },
+            { categoria: "Gastos Variables", limite: 0 },
+            { categoria: "Deudas", limite: 0 }
         ];
 
         // 2. Crea la clave específica para el *nuevo* usuario
