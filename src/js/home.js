@@ -6,6 +6,9 @@ if (!currentUser) {
 
 let colores = ["primary", "secondary", "info", "warning", "danger"];
 
+window.limitePresupuestoGlobal = null;
+window.registrosPresupuestoGlobal = null;
+
 //#region RESUMEN
 document.addEventListener("DOMContentLoaded", async (e) => {
   try {
@@ -183,7 +186,7 @@ document.addEventListener("DOMContentLoaded", async (e) => {
     const msgAlert = document.getElementById("msgAlert");
 
     // Normal Variable
-    let sumGastosByCategory = null;
+    let sumGastosByCategory = {};
 
     //#endregion
 
@@ -281,6 +284,9 @@ document.addEventListener("DOMContentLoaded", async (e) => {
 
     // Renderizamos la alerta
     renderAlerts();
+
+    window.limitePresupuestoGlobal = limitesPresupuesto;
+    window.registrosPresupuestoGlobal = sumGastosByCategory;
   } catch (err) {
     console.error(err);
   }
