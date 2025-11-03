@@ -295,7 +295,7 @@ document.addEventListener("DOMContentLoaded", () => {
       periodoRegistro.value = "Mensual";
       categoriaRegistro.innerHTML = `<option value="">Seleccionar Categoría</option>`;
 
-      Swal.fire({ icon: "success", title: "Gasto registrado correctamente", showConfirmButton: false, timer: 2000 });
+      Swal.fire({ icon: "success", title: "Movimiento registrado correctamente", showConfirmButton: false, timer: 2000 });
     });
   }
 
