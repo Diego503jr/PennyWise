@@ -75,9 +75,15 @@ document.addEventListener("DOMContentLoaded", () => {
     n.toLocaleString("es-SV", { style: "currency", currency: "USD" });
 
   const calcularSaldo = () => {
-    // Suma total de ingresos y gastos
+    // Suma total de ingresos y gastos (ignorando registros que no afectan saldo)
     let total = registros.reduce(
-      (acc, r) => (r.tipo === "Ingreso" ? acc + r.monto : acc - r.monto),
+      (acc, r) => {
+        // Ignorar registros que no deben afectar el saldo (metas archivadas)
+        if (r.noAfectaSaldo || r.tipo === "Meta Completada") {
+          return acc;
+        }
+        return r.tipo === "Ingreso" ? acc + r.monto : acc - r.monto;
+      },
       0
     );
 

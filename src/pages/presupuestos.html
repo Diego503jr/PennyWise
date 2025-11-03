@@ -1,141 +1,196 @@
 <!DOCTYPE html>
 <html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Módulo de Presupuesto</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="../css/styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <style></style>
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Módulo de Presupuesto</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../css/styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;500&display=swap"
-    rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-  <style>
+  <body>
+    <div id="navbar"></div>
 
-  </style>
-</head>
+    <main class="container mt-4">
+      <div
+        class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3"
+      >
+        <h1 class="h2">
+          <i class="bi bi-pie-chart-fill"></i> Detalles de Presupuesto
+        </h1>
+        <button
+          class="btn btn-primary btn-lg"
+          data-bs-toggle="modal"
+          data-bs-target="#modalEstablecerLimites"
+        >
+          <i class="bi bi-pencil-square"></i> Establecer Límites
+        </button>
+      </div>
 
-<body>
-  <div id="navbar"></div>
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card mi-tarjeta mb-4">
+            <div class="card-header bg-success-subtle" id="balanceHeader">
+              <h5 class="mb-0">
+                Balance Total:
+                <span id="balanceTotalSpan" class="fw-bold">$0.00</span>
+              </h5>
+            </div>
+          </div>
 
-  <main class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-      <h1 class="h2">
-        <i class="bi bi-pie-chart-fill"></i> Detalles de Presupuesto
-      </h1>
-      <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#modalEstablecerLimites">
-        <i class="bi bi-pencil-square"></i> Establecer Límites
-      </button>
-    </div>
-
-    <div class="row justify-content-center">
-      <div class="col-lg-8">
-        <div class="card mi-tarjeta mb-4">
-          <div class="card-header bg-success-subtle" id="balanceHeader">
-            <h5 class="mb-0">
-              Balance Total: <span id="balanceTotalSpan" class="fw-bold">$0.00</span>
-            </h5>
+          <div class="card mi-tarjeta mb-4">
+            <div class="card-header bg-warning-subtle">
+              <h5 class="mb-0">
+                Gastos (Total:
+                <span id="totalGastosRealesSpan" class="fw-bold">$0.00</span>)
+              </h5>
+            </div>
+            <div id="gastosAccordionContainer">
+              <div class="card-body text-muted">Cargando...</div>
+            </div>
+          </div>
+          <div class="card mi-tarjeta">
+            <div class="card-header bg-primary-subtle">
+              <h5 class="mb-0">Monitoreo de Presupuestos (Todos los Gastos)</h5>
+            </div>
+            <div class="card-body" id="listaMonitoreoPresupuestos">
+              <p class="text-muted">Cargando datos de monitoreo...</p>
+            </div>
           </div>
         </div>
+      </div>
+    </main>
 
-        <div class="card mi-tarjeta mb-4">
-          <div class="card-header bg-warning-subtle">
-            <h5 class="mb-0">
-              Gastos (Total: <span id="totalGastosRealesSpan" class="fw-bold">$0.00</span>)
-            </h5>
+    <div class="modal fade" id="modalEstablecerLimites" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Establecer Límites de Gasto</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
           </div>
-          <div id="gastosAccordionContainer">
-            <div class="card-body text-muted">Cargando...</div>
+          <div class="modal-body">
+            <form id="formEstablecerLimites">
+              <p class="text-muted">
+                Define cuánto planeas gastar mensualmente en cada categoría.
+              </p>
+
+              <div class="mb-3">
+                <label for="limiteAhorro" class="form-label">Ahorro</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="limiteAhorro"
+                    value="0"
+                  />
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="limiteProvisiones" class="form-label"
+                  >Provisiones (Comida)</label
+                >
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="limiteProvisiones"
+                    value="0"
+                  />
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="limiteGastosFijos" class="form-label"
+                  >Gastos Fijos (Renta, etc.)</label
+                >
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="limiteGastosFijos"
+                    value="0"
+                  />
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="limiteGastosVariables" class="form-label"
+                  >Gastos Variables (Ocio, etc.)</label
+                >
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="limiteGastosVariables"
+                    value="0"
+                  />
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="limiteDeudas" class="form-label">Deudas</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="limiteDeudas"
+                    value="0"
+                  />
+                </div>
+              </div>
+            </form>
           </div>
-        </div>
-        <div class="card mi-tarjeta">
-          <div class="card-header bg-primary-subtle">
-            <h5 class="mb-0">Monitoreo de Presupuestos (Todos los Gastos)</h5>
-          </div>
-          <div class="card-body" id="listaMonitoreoPresupuestos">
-            <p class="text-muted">Cargando datos de monitoreo...</p>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              form="formEstablecerLimites"
+            >
+              Guardar Límites
+            </button>
           </div>
         </div>
       </div>
     </div>
-  </main>
 
-  <div class="modal fade" id="modalEstablecerLimites" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            Establecer Límites de Gasto
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <form id="formEstablecerLimites">
-            <p class="text-muted">
-              Define cuánto planeas gastar mensualmente en cada categoría.
-            </p>
-
-            <div class="mb-3">
-              <label for="limiteAhorro" class="form-label">Ahorro</label>
-              <div class="input-group">
-                <span class="input-group-text">$</span>
-                <input type="number" class="form-control" id="limiteAhorro" value="0">
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label for="limiteProvisiones" class="form-label">Provisiones (Comida)</label>
-              <div class="input-group">
-                <span class="input-group-text">$</span>
-                <input type="number" class="form-control" id="limiteProvisiones" value="0">
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label for="limiteGastosFijos" class="form-label">Gastos Fijos (Renta, etc.)</label>
-              <div class="input-group">
-                <span class="input-group-text">$</span>
-                <input type="number" class="form-control" id="limiteGastosFijos" value="0">
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label for="limiteGastosVariables" class="form-label">Gastos Variables (Ocio, etc.)</label>
-              <div class="input-group">
-                <span class="input-group-text">$</span>
-                <input type="number" class="form-control" id="limiteGastosVariables" value="0">
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label for="limiteDeudas" class="form-label">Deudas</label>
-              <div class="input-group">
-                <span class="input-group-text">$</span>
-                <input type="number" class="form-control" id="limiteDeudas" value="0">
-              </div>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-            Cancelar
-          </button>
-          <button type="submit" class="btn btn-primary" form="formEstablecerLimites">
-            Guardar Límites
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="../js/presupuesto.js"></script>
-  <div id="footer"></div>
-  <script src="../js/addFooterNav.js"></script>
-</body>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../js/presupuesto.js"></script>
+    <div id="footer"></div>
+    <script src="../js/logout.js"></script>
+    <script src="../js/addFooterNav.js"></script>
+    <script src="../js/router.js"></script>
+  </body>
 </html>

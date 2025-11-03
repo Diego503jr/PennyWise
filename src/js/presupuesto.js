@@ -75,17 +75,23 @@ document.addEventListener('DOMContentLoaded', function () {
     }, {});
 
     // Sumar aportes de metas a la categoría "Provisiones"
+    // Solo contar aportes que se hicieron CON límite activo (conLimite: true)
+    // Los aportes hechos SIN límite no deben contarse en el uso de provisiones
     const USER_KEY = (currentUser.username || currentUser.email || currentUser.id || 'guest').toString();
     const metasKey = `metas_${USER_KEY}`;
     const metas = JSON.parse(localStorage.getItem(metasKey) || '[]');
     const totalAportesMetas = metas.reduce((total, m) => {
       if (!m.history) return total;
       return total + m.history.reduce((sum, h) => {
-        return h.action === 'aporte' ? sum + Number(h.amount || 0) : sum;
+        // Solo contar aportes que tengan la marca de que se hicieron con límite
+        if (h.action === 'aporte' && h.conLimite === true) {
+          return sum + Number(h.amount || 0);
+        }
+        return sum;
       }, 0);
     }, 0);
 
-    // Agregar aportes de metas al gastado de Provisiones
+    // Agregar aportes de metas al gastado de Provisiones (solo los que tienen conLimite: true)
     if (totalAportesMetas > 0) {
       if (!gastosSumadosPorCategoria["Provisiones"]) {
         gastosSumadosPorCategoria["Provisiones"] = 0;

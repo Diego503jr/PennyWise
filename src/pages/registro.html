@@ -1,199 +1,271 @@
 <!DOCTYPE html>
 <html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registro de Ingresos y Gastos</title>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Registro de Ingresos y Gastos</title>
+    <!-- Fuentes y Bootstrap -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
+    />
+    <link rel="stylesheet" href="../css/registro.css" />
+    <link rel="stylesheet" href="../css/styles.css" />
+  </head>
 
-  <!-- Fuentes y Bootstrap -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans:wght@400;500&display=swap"
-    rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
-  <link rel="stylesheet" href="../css/registro.css" />
-  <link rel="stylesheet" href="../css/styles.css" />
-</head>
+  <body>
+    <div id="navbar"></div>
 
-<body>
-  <div id="navbar"></div>
+    <main class="container text-center mb-5">
+      <h4 class="fw-bold text-center my-4">Registro de Ingresos y Gastos</h4>
 
-  <main class="container text-center mb-5">
-    <h4 class="fw-bold text-center my-4">Registro de Ingresos y Gastos</h4>
+      <div class="forms-sections">
+        <!-- INGRESOS -->
+        <!-- FORMULARIO UNIFICADO -->
+        <section class="card tarjeta mb-5 p-4" id="formularioPrincipal">
+          <h5 class="fw-bold mb-3">Nuevo Registro</h5>
+          <form id="formRegistro">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Tipo</label>
+                <select id="tipoRegistro" class="form-select" required>
+                  <option value="">Seleccionar Tipo</option>
+                  <option value="Ingreso">Ingreso</option>
+                  <option value="Gasto">Gasto</option>
+                </select>
+              </div>
 
-    <div class="forms-sections">
-      <!-- INGRESOS -->
-      <!-- FORMULARIO UNIFICADO -->
-      <section class="card tarjeta mb-5 p-4" id="formularioPrincipal">
-        <h5 class="fw-bold mb-3">Nuevo Registro</h5>
-        <form id="formRegistro">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label fw-bold">Tipo</label>
-              <select id="tipoRegistro" class="form-select" required>
-                <option value="">Seleccionar Tipo</option>
-                <option value="Ingreso">Ingreso</option>
-                <option value="Gasto">Gasto</option>
-              </select>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Monto ($)</label>
+                <input
+                  type="number"
+                  id="montoRegistro"
+                  class="form-control"
+                  placeholder="Monto"
+                  required
+                  min="1"
+                  step="0.01"
+                />
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Categoría</label>
+                <select id="categoriaRegistro" class="form-select" required>
+                  <option value="">Seleccionar Categoría</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Descripción</label>
+                <input
+                  type="text"
+                  id="descripcionRegistro"
+                  class="form-control"
+                  placeholder="Descripción"
+                />
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Fecha</label>
+                <input
+                  type="date"
+                  id="fechaRegistro"
+                  class="form-control"
+                  required
+                />
+              </div>
+
+              <input type="hidden" id="periodoRegistro" value="Mensual" />
+
+              <div class="col-md-12 text-end">
+                <button
+                  type="button"
+                  class="btn btn-secondary mt-3"
+                  id="btnLimpiarForm"
+                >
+                  Cancelar
+                </button>
+                <button type="submit" class="btn btn-login mt-3">
+                  Guardar
+                </button>
+              </div>
             </div>
-
-            <div class="col-md-6">
-              <label class="form-label fw-bold">Monto ($)</label>
-              <input type="number" id="montoRegistro" class="form-control" placeholder="Monto" required min="1"
-                step="0.01" />
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label fw-bold">Categoría</label>
-              <select id="categoriaRegistro" class="form-select" required>
-                <option value="">Seleccionar Categoría</option>
-              </select>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label fw-bold">Descripción</label>
-              <input type="text" id="descripcionRegistro" class="form-control" placeholder="Descripción" />
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label fw-bold">Fecha</label>
-              <input type="date" id="fechaRegistro" class="form-control" required />
-            </div>
-
-            <input type="hidden" id="periodoRegistro" value="Mensual" />
-
-            <div class="col-md-12 text-end">
-              <button type="button" class="btn btn-secondary mt-3" id="btnLimpiarForm">Cancelar</button>
-              <button type="submit" class="btn btn-login mt-3">Guardar</button>
-            </div>
-          </div>
-        </form>
-      </section>
-      <section class="card tarjeta mb-5 p-4" id="graficoContainer">
-        <h5 class="fw-bold mb-3">Ingresos Mensuales</h5>
-        <canvas id="graficoIngresos"></canvas>
-      </section>
-    </div>
-
-    <!-- HISTORIAL -->
-    <section class="card tarjeta p-4 mb-5">
-      <h5 class="fw-bold mb-3">Historial de Registros</h5>
-
-      <div class="text-start mb-3">
-        <span class="fw-bold">Saldo Total: </span>
-        <span id="saldoTotal" class="fw-bold text-primary">$0.00</span>
+          </form>
+        </section>
+        <section class="card tarjeta mb-5 p-4" id="graficoContainer">
+          <h5 class="fw-bold mb-3">Ingresos Mensuales</h5>
+          <canvas id="graficoIngresos"></canvas>
+        </section>
       </div>
 
-      <div class="row mb-3">
-        <div class="col-lg-4 col-md-4">
-          <label for="filtroTipo" class="form-label fw-bold">Tipo de Movimiento</label>
-          <select id="filtroTipo" class="form-select">
-            <option value="todos">Todos</option>
-            <option value="Ingreso">Ingresos</option>
-            <option value="Gasto">Gastos</option>
-          </select>
+      <!-- HISTORIAL -->
+      <section class="card tarjeta p-4 mb-5">
+        <h5 class="fw-bold mb-3">Historial de Registros</h5>
+
+        <div class="text-start mb-3">
+          <span class="fw-bold">Saldo Total: </span>
+          <span id="saldoTotal" class="fw-bold text-primary">$0.00</span>
         </div>
 
-        <div class="col-lg-4 col-md-4">
-          <label for="filtroMes" class="form-label fw-bold">Fecha</label>
-          <input type="month" id="filtroMes" class="form-control" />
-        </div>
-
-        <div class="col-lg-4 col-md-4">
-          <label for="filtroCategoria" class="form-label fw-bold">Categoría</label>
-          <select id="filtroCategoria" class="form-select">
-            <option value="todas">Todas las Categorías</option>
-            <optgroup label="Ingresos">
-              <option value="Salario">Salario</option>
-              <option value="Comisiones">Comisiones</option>
-              <option value="Venta">Venta</option>
-              <option value="Pago">Pago</option>
-              <option value="Otro">Otro</option>
-            </optgroup>
-            <optgroup label="Gastos">
-              <option value="Ahorro">Ahorro</option>
-              <!-- <option value="Provisiones">Provisiones</option> -->
-              <option value="Gastos Fijos">Gastos Fijos</option>
-              <option value="Gastos Variables">Gastos Variables</option>
-              <option value="Deudas">Deudas</option>
-            </optgroup>
-          </select>
-        </div>
-        <div class="col-lg-12 text-end mb-3">
-          <button type="button" class="btn btn-secondary" id="btnLimpiarFiltros">Limpiar filtros</button>
-        </div>
-
-      </div>
-
-      <div class="table-responsive">
-        <table class="table table-striped table-hover">
-          <thead>
-            <tr>
-              <th>Tipo</th>
-              <th>Monto</th>
-              <th>Categoría</th>
-              <th>Fecha</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tablaHistorial"></tbody>
-        </table>
-      </div>
-    </section>
-  </main>
-
-  <!-- MODAL EDITAR -->
-  <div class="modal fade" id="modalEditar" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content p-3">
-        <h5 class="fw-bold mb-3">Editar Registro</h5>
-        <form id="formEditar">
-          <input type="hidden" id="editarId" />
-          <div class="row g-3">
-            <div class="col-md-6">
-              <input type="number" id="editarMonto" class="form-control" required min="1" step="0.01" />
-            </div>
-
-            <div class="col-md-6">
-              <select id="editarCategoria" class="form-select" required>
-                <option value="">Seleccionar Categoría</option>
-              </select>
-            </div>
-
-            <div class="col-md-6">
-              <input type="text" id="editarDescripcion" class="form-control" placeholder="Descripción" />
-            </div>
-
-            <div class="col-md-6">
-              <input type="date" id="editarFecha" class="form-control" required />
-            </div>
-
-            <div class="col-md-6">
-              <input type="text" id="editarPeriodo" class="form-control" value="Mensual" hidden />
-            </div>
+        <div class="row mb-3">
+          <div class="col-lg-4 col-md-4">
+            <label for="filtroTipo" class="form-label fw-bold"
+              >Tipo de Movimiento</label
+            >
+            <select id="filtroTipo" class="form-select">
+              <option value="todos">Todos</option>
+              <option value="Ingreso">Ingresos</option>
+              <option value="Gasto">Gastos</option>
+            </select>
           </div>
 
-          <div class="text-end mt-4">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-              Cancelar
+          <div class="col-lg-4 col-md-4">
+            <label for="filtroMes" class="form-label fw-bold">Fecha</label>
+            <input type="month" id="filtroMes" class="form-control" />
+          </div>
+
+          <div class="col-lg-4 col-md-4">
+            <label for="filtroCategoria" class="form-label fw-bold"
+              >Categoría</label
+            >
+            <select id="filtroCategoria" class="form-select">
+              <option value="todas">Todas las Categorías</option>
+              <optgroup label="Ingresos">
+                <option value="Salario">Salario</option>
+                <option value="Comisiones">Comisiones</option>
+                <option value="Venta">Venta</option>
+                <option value="Pago">Pago</option>
+                <option value="Otro">Otro</option>
+              </optgroup>
+              <optgroup label="Gastos">
+                <option value="Ahorro">Ahorro</option>
+                <!-- <option value="Provisiones">Provisiones</option> -->
+                <option value="Gastos Fijos">Gastos Fijos</option>
+                <option value="Gastos Variables">Gastos Variables</option>
+                <option value="Deudas">Deudas</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="col-lg-12 text-end mb-3">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              id="btnLimpiarFiltros"
+            >
+              Limpiar filtros
             </button>
-            <button type="submit" class="btn btn-login">Guardar</button>
           </div>
-        </form>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Monto</th>
+                <th>Categoría</th>
+                <th>Fecha</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaHistorial"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <!-- MODAL EDITAR -->
+    <div class="modal fade" id="modalEditar" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content p-3">
+          <h5 class="fw-bold mb-3">Editar Registro</h5>
+          <form id="formEditar">
+            <input type="hidden" id="editarId" />
+            <div class="row g-3">
+              <div class="col-md-6">
+                <input
+                  type="number"
+                  id="editarMonto"
+                  class="form-control"
+                  required
+                  min="1"
+                  step="0.01"
+                />
+              </div>
+
+              <div class="col-md-6">
+                <select id="editarCategoria" class="form-select" required>
+                  <option value="">Seleccionar Categoría</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <input
+                  type="text"
+                  id="editarDescripcion"
+                  class="form-control"
+                  placeholder="Descripción"
+                />
+              </div>
+
+              <div class="col-md-6">
+                <input
+                  type="date"
+                  id="editarFecha"
+                  class="form-control"
+                  required
+                />
+              </div>
+
+              <div class="col-md-6">
+                <input
+                  type="text"
+                  id="editarPeriodo"
+                  class="form-control"
+                  value="Mensual"
+                  hidden
+                />
+              </div>
+            </div>
+
+            <div class="text-end mt-4">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn-login">Guardar</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div id="footer"></div>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.js"></script>
-  <script src="../js/registro.js"></script>
-  <script src="../js/addFooterNav.js"></script>
-</body>
-
+    <div id="footer"></div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.js"></script>
+    <script src="../js/registro.js"></script>
+    <script src="../js/logout.js"></script>
+    <script src="../js/addFooterNav.js"></script>
+    <script src="../js/router.js"></script>
+  </body>
 </html>
