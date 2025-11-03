@@ -1,12 +1,12 @@
-let currentUser = JSON.parse(localStorage.getItem("currentUser"));
+let isLoggedIn = JSON.parse(localStorage.getItem("isLoggedIn"));
 
 //  Si el usuario no esta registrado lo redireccionamos al index
-if (!currentUser) {
+if (!isLoggedIn) {
   Swal.fire({
     icon: "error",
     title: "Atención",
-    text: "Usted no se ha registrado en la plataform",
+    text: "Usted no se ha registrado en la plataforma",
   }).then(() => {
-    window.location.href = "index.html";
+    window.location.href = "../../index.html";
   });
 }
