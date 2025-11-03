@@ -48,6 +48,11 @@ border-radius: 6px;
 transition: background-color 0.3s ease, color 0.3s ease; 
 }
 
+.form-input::placeholder {
+  color: var(--navbar-text); 
+  opacity: 0.7; 
+}
+
 .form-input:focus {
 background-color: #ffffff; 
 color: var(--btn-text); 

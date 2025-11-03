@@ -1,7 +1,17 @@
 // Espera a que el DOM esté listo
 document.addEventListener("DOMContentLoaded", function () {
-  console.log(limitePresupuestoGlobal);
-  console.log(registrosPresupuestoGlobal);
+  // Obtenemos los limites y los gastos reales
+  let labels = [];
+  let limites = [];
+  let real = [];
+  limitePresupuestoGlobal.forEach((e) => {
+    labels.push(e.categoria);
+    limites.push(e.limite);
+  });
+
+  Object.values(registrosPresupuestoGlobal).forEach((val) => {
+    real.push(val);
+  });
 
   // GRÁFICA DE BARRAS - Presupuesto vs Real
   const ctxBarra = document
@@ -10,24 +20,18 @@ document.addEventListener("DOMContentLoaded", function () {
   const graficaBarra = new Chart(ctxBarra, {
     type: "bar",
     data: {
-      labels: [
-        "Gastos Fijos",
-        "Gastos Variables",
-        "Ahorro",
-        "Deudas",
-        "Provisiones",
-      ],
+      labels: labels,
       datasets: [
         {
           label: "Presupuestado",
-          data: [1000, 500, 300, 200, 100], // Aquí van tus datos reales
+          data: limites, // Aquí van tus datos reales
           backgroundColor: "rgba(0, 255, 8, 0.6)",
           borderColor: "rgba(0, 255, 8, 0.6)",
           borderWidth: 1,
         },
         {
           label: "Real",
-          data: [950, 600, 250, 200, 100], // Aquí van tus datos reales
+          data: real, // Aquí van tus datos reales
           backgroundColor: "rgba(255, 0, 0, 0.6)",
           borderColor: "rgba(255, 0, 0, 0.6)",
           borderWidth: 1,
@@ -70,27 +74,23 @@ document.addEventListener("DOMContentLoaded", function () {
   const graficaPastel1 = new Chart(ctxPastel1, {
     type: "pie",
     data: {
-      labels: [
-        "Gastos Fijos",
-        "Gastos Variables",
-        "Ahorro",
-        "Deudas",
-        "Provisiones",
-      ],
+      labels: labels,
       datasets: [
         {
-          data: [1000, 500, 300, 200, 100], // Tus datos presupuestados
+          data: limites, // Tus datos presupuestados
           backgroundColor: [
-            "rgba(255, 99, 132, 0.8)",
             "rgba(54, 162, 235, 0.8)",
+            "rgba(75, 192, 81, 0.8)",
             "rgba(255, 206, 86, 0.8)",
             "rgba(75, 192, 192, 0.8)",
+            "rgba(255, 99, 132, 0.8)",
           ],
           borderColor: [
-            "rgba(255, 99, 132, 1)",
-            "rgba(54, 162, 235, 1)",
-            "rgba(255, 206, 86, 1)",
-            "rgba(75, 192, 192, 1)",
+            "rgba(54, 162, 235, 0.8)",
+            "rgba(75, 192, 81, 0.8)",
+            "rgba(255, 206, 86, 0.8)",
+            "rgba(75, 192, 192, 0.8)",
+            "rgba(255, 99, 132, 0.8)",
           ],
           borderWidth: 2,
         },
@@ -126,27 +126,23 @@ document.addEventListener("DOMContentLoaded", function () {
   const graficaPastel2 = new Chart(ctxPastel2, {
     type: "pie",
     data: {
-      labels: [
-        "Gastos Fijos",
-        "Gastos Variables",
-        "Ahorro",
-        "Deudas",
-        "Provisiones",
-      ],
+      labels: labels,
       datasets: [
         {
-          data: [950, 600, 250, 200, 100], // Tus datos reales
+          data: real, // Tus datos reales
           backgroundColor: [
-            "rgba(255, 99, 132, 0.8)",
             "rgba(54, 162, 235, 0.8)",
+            "rgba(75, 192, 81, 0.8)",
             "rgba(255, 206, 86, 0.8)",
             "rgba(75, 192, 192, 0.8)",
+            "rgba(255, 99, 132, 0.8)",
           ],
           borderColor: [
-            "rgba(255, 99, 132, 1)",
-            "rgba(54, 162, 235, 1)",
-            "rgba(255, 206, 86, 1)",
-            "rgba(75, 192, 192, 1)",
+            "rgba(54, 162, 235, 0.8)",
+            "rgba(75, 192, 81, 0.8)",
+            "rgba(255, 206, 86, 0.8)",
+            "rgba(75, 192, 192, 0.8)",
+            "rgba(255, 99, 132, 0.8)",
           ],
           borderWidth: 2,
         },
