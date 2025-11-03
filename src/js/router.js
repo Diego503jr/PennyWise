@@ -6,6 +6,8 @@ if (!isLoggedIn) {
     icon: "error",
     title: "Atención",
     text: "Usted no se ha registrado en la plataforma",
+    allowOutsideClick: false,
+    allowEscapeKey: false,
   }).then(() => {
     window.location.href = "../../index.html";
   });
